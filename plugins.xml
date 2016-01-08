@@ -1,0 +1,7 @@
+<library path="lib/libvigir_walk_control">
+  <class type="vigir_walk_control::WalkControllerTestPlugin" base_class_type="vigir_walk_control::WalkControllerPlugin">
+    <description>
+      WalkControllerTestPlugin: Example plugin which simulates execution of steps.
+    </description>
+  </class>
+</library>

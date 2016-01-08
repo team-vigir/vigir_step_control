@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+  <!-- start walk controller -->
+  <node name="walk_controller" pkg="vigir_walk_control" type="walk_controller_node" respawn="true" output="screen">
+    <!-- load plugin configurations from YAML file to parameter server -->
+    <rosparam file="$(find vigir_walk_control)/config/plugin_descriptions.yaml" command="load" />
+  </node>
+</launch>

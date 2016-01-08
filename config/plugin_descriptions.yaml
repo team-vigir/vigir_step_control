@@ -1,0 +1,7 @@
+# WalkControllerPlugin
+walk_controller_test_plugin:
+  type_class: vigir_walk_control::WalkControllerTestPlugin
+  type_class_package: vigir_walk_control
+  base_class: vigir_walk_control::WalkControllerPlugin
+  base_class_package: vigir_walk_control
+
