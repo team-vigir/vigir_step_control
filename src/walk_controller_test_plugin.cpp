@@ -51,16 +51,25 @@ void WalkControllerTestPlugin::preProcess(const ros::TimerEvent& event)
     if (walk_controller_queue->lastStepIndex() == feedback.last_performed_step_index)
     {
       ROS_INFO("[WalkControllerTestPlugin] Fake execution finished.");
+
+      feedback.currently_executing_step_index = -1;
+      feedback.first_changeable_step_index = -1;
+      setFeedback(feedback);
+
       walk_controller_queue->reset();
+      updateQueueFeedback();
+
       setState(FINISHED);
-      return;
     }
+    // otherwise trigger fake execution of next step
+    else
+    {
+      feedback.currently_executing_step_index++;
+      feedback.first_changeable_step_index++;
+      setFeedback(feedback);
 
-    feedback.currently_executing_step_index++;
-    feedback.first_changeable_step_index++;
-
-    setNextStepIndexNeeded(feedback.currently_executing_step_index);
-    setFeedback(feedback);
+      setNextStepIndexNeeded(feedback.currently_executing_step_index);
+    }
   }
 }
 

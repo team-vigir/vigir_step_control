@@ -41,7 +41,14 @@ namespace vigir_walk_control
 {
 using namespace vigir_footstep_planning_msgs;
 
-enum WalkControllerState {IDLE, ACTIVE, PAUSED, FINISHED, FAILED};
+enum WalkControllerState
+{
+  IDLE      = msgs::ExecuteStepPlanFeedback::IDLE,
+  ACTIVE    = msgs::ExecuteStepPlanFeedback::ACTIVE,
+  PAUSED    = msgs::ExecuteStepPlanFeedback::PAUSED,
+  FINISHED  = msgs::ExecuteStepPlanFeedback::FINISHED,
+  FAILED    = msgs::ExecuteStepPlanFeedback::FAILED
+};
 
 std::string toString(const WalkControllerState& state);
 
@@ -82,6 +89,11 @@ public:
   const msgs::ExecuteStepPlanFeedback& getFeedback() const;
 
   /**
+   * @brief Updates feedback information with internal state data.
+   */
+  void updateQueueFeedback();
+
+  /**
    * @brief Merges given step plan to the current execution queue of steps. Hereby, two cases have to considered:
    * 1. In case of an empty execution queue (robot is standing) the step plan has to begin with step index 0.
    * 2. In case of an non-empty execution queue (robot is walking) the first step of the step plan has to be
@@ -118,7 +130,7 @@ public:
    * @brief PostProcess Method is called after processing step, e.g. sum up current status and cleanups.
    * The default implementation resets the plugin when execution has been finshed or has failed.
    */
-  virtual void postProcess(const ros::TimerEvent& event);
+  virtual void postProcess(const ros::TimerEvent& /*event*/) {}
 
   /**
    * @brief This method will be called when a new step should be executed. The call of this function should be triggered

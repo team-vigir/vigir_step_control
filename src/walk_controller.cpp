@@ -72,6 +72,11 @@ void WalkController::update(const ros::TimerEvent& event)
   if (!walk_controller_plugin)
     return;
 
+  // Save current state to be able to handle action server correctly;
+  // We must not send setSucceeded/setAborted state while sending the
+  // final feedback message in the same update cycle!
+  WalkControllerState state = walk_controller_plugin->getState();
+
   // pre process
   walk_controller_plugin->preProcess(event);
 
@@ -82,7 +87,7 @@ void WalkController::update(const ros::TimerEvent& event)
   publishFeedback();
 
   // update action server
-  switch (walk_controller_plugin->getState())
+  switch (state)
   {
     case FINISHED:
       if (execute_step_plan_as->isActive())
@@ -104,7 +109,7 @@ void WalkController::update(const ros::TimerEvent& event)
 
 void WalkController::publishFeedback() const
 {
-  if (walk_controller_plugin->getState() == ACTIVE)
+  if (walk_controller_plugin->getState() != IDLE)
   {
     const msgs::ExecuteStepPlanFeedback& feedback = walk_controller_plugin->getFeedback();
 

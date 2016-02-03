@@ -55,6 +55,12 @@ public:
   bool empty() const;
 
   /**
+   * @brief Returns size of step queue
+   * @return Size of step queue
+   */
+  size_t size() const;
+
+  /**
    * @brief Merges given step plan to the current execution queue of steps. Hereby, two cases have to considered:
    * 1. In case of an empty execution queue (robot is standing) the step plan has to begin with step index 0.
    * 2. In case of an non-empty execution queue (robot is walking) the first step of the step plan has to be

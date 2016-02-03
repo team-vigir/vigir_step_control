@@ -22,6 +22,12 @@ bool WalkControllerQueue::empty() const
   return step_plan.empty();
 }
 
+size_t WalkControllerQueue::size() const
+{
+  boost::shared_lock<boost::shared_mutex> lock(queue_mutex);
+  return step_plan.size();
+}
+
 bool WalkControllerQueue::updateStepPlan(const msgs::StepPlan& step_plan, int min_step_index)
 {
   if (step_plan.steps.empty())

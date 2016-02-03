@@ -75,6 +75,7 @@ void WalkControllerPlugin::setState(WalkControllerState state)
   boost::unique_lock<boost::shared_mutex> lock(plugin_mutex);
   ROS_INFO("[WalkControllerPlugin] Switching state from '%s' to '%s'.", toString(this->state).c_str(), toString(state).c_str());
   this->state = state;
+  feedback.controller_state = state;
 }
 
 void WalkControllerPlugin::setNextStepIndexNeeded(int index)
@@ -95,20 +96,35 @@ void WalkControllerPlugin::setFeedback(const msgs::ExecuteStepPlanFeedback& feed
   this->feedback = feedback;
 }
 
+void WalkControllerPlugin::updateQueueFeedback()
+{
+  boost::unique_lock<boost::shared_mutex> lock(plugin_mutex);
+  feedback.queue_size = static_cast<int>(walk_controller_queue->size());
+  feedback.first_queued_step_index = walk_controller_queue->firstStepIndex();
+  feedback.last_queued_step_index = walk_controller_queue->lastStepIndex();
+}
+
 void WalkControllerPlugin::updateStepPlan(const msgs::StepPlan& step_plan)
 {
   if (step_plan.steps.empty())
     return;
 
+  // Reset controller if previous execution was finished or has failed
+  if (state == FINISHED || state == FAILED)
+    reset();
+
   // Allow step plan updates only in IDLE and ACTIVE state
   WalkControllerState state = getState();
   if (state == IDLE || state == ACTIVE)
   {
-    boost::unique_lock<boost::shared_mutex> lock(plugin_mutex);
+    msgs::ExecuteStepPlanFeedback feedback = getFeedback();
+
     if (walk_controller_queue->updateStepPlan(step_plan, feedback.first_changeable_step_index))
     {
       if (state == ACTIVE)
-        last_step_index_sent = feedback.first_changeable_step_index-1;
+        setLastStepIndexSent(feedback.first_changeable_step_index-1);
+
+      updateQueueFeedback();
 
       ROS_INFO("[WalkControllerPlugin] Updated step queue. Current queue has steps in range [%i; %i].", walk_controller_queue->firstStepIndex(), walk_controller_queue->lastStepIndex());
     }
@@ -118,23 +134,19 @@ void WalkControllerPlugin::updateStepPlan(const msgs::StepPlan& step_plan)
 void WalkControllerPlugin::preProcess(const ros::TimerEvent& /*event*/)
 {
   // check if new walking request has been done
-  if (getState() == IDLE)
+  if (getState() == IDLE && !walk_controller_queue->empty())
   {
-    // check if there are steps enqueued by now
-    if (!walk_controller_queue->empty())
+    // check consisty
+    if (walk_controller_queue->firstStepIndex() != 0)
     {
-      // check consisty
-      if (walk_controller_queue->firstStepIndex() != 0)
-      {
-        ROS_ERROR("[WalkControllerTestPlugin] Step plan doesn't start with initial step (step_index = 0). Execution aborted!");
-        setState(FAILED);
-        return;
-      }
-
+      ROS_ERROR("[WalkControllerTestPlugin] Step plan doesn't start with initial step (step_index = 0). Execution aborted!");
+      setState(FAILED);
+    }
+    else
+    {
       initWalk();
       setState(ACTIVE);
     }
-    return;
   }
 }
 
@@ -143,10 +155,10 @@ void WalkControllerPlugin::process(const ros::TimerEvent& /*event*/)
   // execute steps
   if (getState() == ACTIVE)
   {
-    // spool all needed steps
+    // spool all requested steps
     while (getLastStepIndexSent() < getNextStepIndexNeeded())
     {
-      // check if queue has been executed
+      // check if queue isn't empty
       if (walk_controller_queue->empty())
       {
         ROS_ERROR("[WalkControllerTestPlugin] Step %i required but not in queue. Execution aborted!", getNextStepIndexNeeded());
@@ -176,27 +188,16 @@ void WalkControllerPlugin::process(const ros::TimerEvent& /*event*/)
 
       // increment last_step_index_sent
       setLastStepIndexSent(next_step_index);
-    }
-  }
-}
 
-void WalkControllerPlugin::postProcess(const ros::TimerEvent& /*event*/)
-{
-  switch (getState())
-  {
-    case ACTIVE:
+      msgs::ExecuteStepPlanFeedback feedback = getFeedback();
+
       // garbage collection: remove already executed steps
       if (feedback.last_performed_step_index >= 0)
         walk_controller_queue->removeSteps(0, feedback.last_performed_step_index);
-      break;
 
-    case FINISHED:
-    case FAILED:
-      reset();
-      break;
-
-    default:
-      break;
+      // update feedback
+      updateQueueFeedback();
+    }
   }
 }
 
