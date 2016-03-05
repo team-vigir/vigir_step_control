@@ -43,6 +43,10 @@ class WalkControllerTestPlugin
   : public WalkControllerPlugin
 {
 public:
+  // typedefs
+  typedef boost::shared_ptr<WalkControllerTestPlugin> Ptr;
+  typedef boost::shared_ptr<const WalkControllerTestPlugin> ConstPtr;
+
   WalkControllerTestPlugin();
   virtual ~WalkControllerTestPlugin();
 
@@ -66,11 +70,8 @@ public:
    */
   bool executeStep(const msgs::Step& step) override;
 
-  typedef boost::shared_ptr<WalkControllerTestPlugin> Ptr;
-  typedef boost::shared_ptr<const WalkControllerTestPlugin> ConstPtr;
-
 protected:
-  ros::Time next_step_needed_time;
+  ros::Time next_step_needed_time_;
 };
 }
 

@@ -9,7 +9,7 @@ namespace vigir_walk_control
 {
 WalkControllerNode::WalkControllerNode(ros::NodeHandle& nh)
 {
-  walk_controller.reset(new WalkController(nh, nh.param("auto_spin", true)));
+  walk_controller_.reset(new WalkController(nh, nh.param("auto_spin", true)));
 }
 
 WalkControllerNode::~WalkControllerNode()

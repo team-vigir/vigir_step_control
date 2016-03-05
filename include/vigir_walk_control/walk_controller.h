@@ -49,6 +49,10 @@ typedef boost::shared_ptr<ExecuteStepPlanActionServer> ExecuteStepPlanActionServ
 class WalkController
 {
 public:
+  // typedefs
+  typedef boost::shared_ptr<WalkController> Ptr;
+  typedef boost::shared_ptr<const WalkController> ConstPtr;
+
   /**
    * @brief WalkController
    * @param nh Nodehandle living in correct namespace for all services
@@ -82,10 +86,6 @@ public:
    */
   void update(const ros::TimerEvent& event = ros::TimerEvent());
 
-  // typedefs
-  typedef boost::shared_ptr<WalkController> Ptr;
-  typedef boost::shared_ptr<const WalkController> ConstPtr;
-
 protected:
   WalkControllerPlugin::Ptr walk_controller_plugin;
 
@@ -100,16 +100,16 @@ protected:
   void executePreemptionAction(ExecuteStepPlanActionServerPtr& as);
 
   // subscriber
-  ros::Subscriber load_plugin_by_name_sub;
-  ros::Subscriber execute_step_plan_sub;
+  ros::Subscriber load_plugin_by_name_sub_;
+  ros::Subscriber execute_step_plan_sub_;
 
   // publisher
-  ros::Publisher planning_feedback_pub;
+  ros::Publisher planning_feedback_pub_;
 
   // action servers
-  boost::shared_ptr<ExecuteStepPlanActionServer> execute_step_plan_as;
+  boost::shared_ptr<ExecuteStepPlanActionServer> execute_step_plan_as_;
 
-  ros::Timer update_timer;
+  ros::Timer update_timer_;
 };
 }
 

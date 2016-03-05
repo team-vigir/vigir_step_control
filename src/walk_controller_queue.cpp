@@ -12,20 +12,20 @@ WalkControllerQueue::~WalkControllerQueue()
 
 void WalkControllerQueue::reset()
 {
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex);
-  step_plan.clear();
+  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  step_plan_.clear();
 }
 
 bool WalkControllerQueue::empty() const
 {
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex);
-  return step_plan.empty();
+  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  return step_plan_.empty();
 }
 
 size_t WalkControllerQueue::size() const
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex);
-  return step_plan.size();
+  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
+  return step_plan_.size();
 }
 
 bool WalkControllerQueue::updateStepPlan(const msgs::StepPlan& step_plan, int min_step_index)
@@ -44,10 +44,10 @@ bool WalkControllerQueue::updateStepPlan(const msgs::StepPlan& step_plan, int mi
 
   unsigned int step_plan_start_index = std::max(min_step_index, step_plan.steps.front().step_index);
 
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex);
+  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
 
   // step index has to start at 0, when step queue is empty
-  if (this->step_plan.empty())
+  if (this->step_plan_.empty())
   {
     if (step_plan_start_index != 0)
     {
@@ -61,9 +61,9 @@ bool WalkControllerQueue::updateStepPlan(const msgs::StepPlan& step_plan, int mi
     msgs::Step new_step;
 
     // check if queue and given step plan has overlapping steps
-    if (!this->step_plan.getStep(old_step, step_plan_start_index))
+    if (!this->step_plan_.getStep(old_step, step_plan_start_index))
     {
-      ROS_ERROR("[WalkControllerQueue] updateStepPlan: Can't merge plan due to non-overlapping step indices of current step plan (max queued index: %u, needed index: %u)!", this->step_plan.getLastStepIndex(), step_plan_start_index);
+      ROS_ERROR("[WalkControllerQueue] updateStepPlan: Can't merge plan due to non-overlapping step indices of current step plan (max queued index: %u, needed index: %u)!", this->step_plan_.getLastStepIndex(), step_plan_start_index);
       return false;
     }
     // check if input step plan has needed overlapping steps
@@ -95,34 +95,34 @@ bool WalkControllerQueue::updateStepPlan(const msgs::StepPlan& step_plan, int mi
   }
 
   /// merge step plan
-  this->step_plan.stitchStepPlan(step_plan, step_plan_start_index);
-  this->step_plan.removeSteps(step_plan.steps.rbegin()->step_index+1);
+  this->step_plan_.stitchStepPlan(step_plan, step_plan_start_index);
+  this->step_plan_.removeSteps(step_plan.steps.rbegin()->step_index+1);
 
   return true;
 }
 
 bool WalkControllerQueue::getStep(msgs::Step& step, unsigned int step_index)
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex);
-  return step_plan.getStep(step, step_index);
+  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
+  return step_plan_.getStep(step, step_index);
 }
 
 bool WalkControllerQueue::getStepAt(msgs::Step& step, unsigned int position)
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex);
-  return step_plan.getStepAt(step, position);
+  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
+  return step_plan_.getStepAt(step, position);
 }
 
 std::vector<msgs::Step> WalkControllerQueue::getSteps(unsigned int start_index, unsigned int end_index) const
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex);
+  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
 
   std::vector<msgs::Step> steps;
 
   for (unsigned int i = start_index; i <= end_index; i++)
   {
     msgs::Step step;
-    if (step_plan.getStep(step, i))
+    if (step_plan_.getStep(step, i))
       steps.push_back(step);
   }
 
@@ -131,20 +131,20 @@ std::vector<msgs::Step> WalkControllerQueue::getSteps(unsigned int start_index, 
 
 void WalkControllerQueue::removeStep(unsigned int step_index)
 {
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex);
-  step_plan.removeStep(step_index);
+  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  step_plan_.removeStep(step_index);
 }
 
 void WalkControllerQueue::removeSteps(unsigned int from_step_index, int to_step_index)
 {
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex);
-  step_plan.removeSteps(from_step_index, to_step_index);
+  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  step_plan_.removeSteps(from_step_index, to_step_index);
 }
 
 bool WalkControllerQueue::popStep(msgs::Step& step)
 {
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex);
-  return step_plan.popStep(step);
+  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  return step_plan_.popStep(step);
 }
 
 bool WalkControllerQueue::popStep()
@@ -155,10 +155,10 @@ bool WalkControllerQueue::popStep()
 
 int WalkControllerQueue::firstStepIndex() const
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex);
+  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
 
   msgs::Step step;
-  if (step_plan.getfirstStep(step))
+  if (step_plan_.getfirstStep(step))
     return step.step_index;
   else
     return -1;
@@ -166,10 +166,10 @@ int WalkControllerQueue::firstStepIndex() const
 
 int WalkControllerQueue::lastStepIndex() const
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex);
+  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
 
   msgs::Step step;
-  if (step_plan.getLastStep(step))
+  if (step_plan_.getLastStep(step))
     return step.step_index;
   else
     return -1;

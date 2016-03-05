@@ -43,6 +43,10 @@ using namespace vigir_footstep_planning;
 class WalkControllerQueue
 {
 public:
+  // typedefs
+  typedef boost::shared_ptr<WalkControllerQueue> Ptr;
+  typedef boost::shared_ptr<const WalkControllerQueue> ConstPtr;
+
   WalkControllerQueue();
   virtual ~WalkControllerQueue();
 
@@ -129,15 +133,11 @@ public:
    */
   int lastStepIndex() const;
 
-  // typedefs
-  typedef boost::shared_ptr<WalkControllerQueue> Ptr;
-  typedef boost::shared_ptr<const WalkControllerQueue> ConstPtr;
-
 protected:
-  StepPlan step_plan;
+  StepPlan step_plan_;
 
   // mutex to ensure thread safeness
-  mutable boost::shared_mutex queue_mutex;
+  mutable boost::shared_mutex queue_mutex_;
 };
 }
 

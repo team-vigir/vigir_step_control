@@ -56,6 +56,10 @@ class WalkControllerPlugin
   : public vigir_pluginlib::Plugin
 {
 public:
+  // typedefs
+  typedef boost::shared_ptr<WalkControllerPlugin> Ptr;
+  typedef boost::shared_ptr<const WalkControllerPlugin> ConstPtr;
+
   WalkControllerPlugin();
   virtual ~WalkControllerPlugin();
 
@@ -144,9 +148,6 @@ public:
    */
   virtual void stop();
 
-  typedef boost::shared_ptr<WalkControllerPlugin> Ptr;
-  typedef boost::shared_ptr<const WalkControllerPlugin> ConstPtr;
-
 protected:
   void setState(WalkControllerState state);
 
@@ -156,23 +157,23 @@ protected:
 
   void setFeedback(const msgs::ExecuteStepPlanFeedback& feedback);
 
-  WalkControllerQueue::Ptr walk_controller_queue;
+  WalkControllerQueue::Ptr walk_controller_queue_;
 
   // mutex to ensure thread safeness
-  mutable boost::shared_mutex plugin_mutex;
+  mutable boost::shared_mutex plugin_mutex_;
 
 private:
   // current state of walk controller
-  WalkControllerState state;
+  WalkControllerState state_;
 
   // next step index needed by walk engine
-  int next_step_index_needed;
+  int next_step_index_needed_;
 
   // last step index sent to walk engine
-  int last_step_index_sent;
+  int last_step_index_sent_;
 
   // contains current feedback state; should be updated in each cycle
-  msgs::ExecuteStepPlanFeedback feedback;
+  msgs::ExecuteStepPlanFeedback feedback_;
 };
 }
 

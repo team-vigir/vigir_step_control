@@ -16,23 +16,23 @@ WalkController::WalkController(ros::NodeHandle& nh, bool auto_spin)
   loadPluginByName(plugin_name);
 
   // subscribe topics
-  load_plugin_by_name_sub = nh.subscribe("load_plugin_by_name", 1, &WalkController::loadPluginByName, this);
-  execute_step_plan_sub = nh.subscribe("execute_step_plan", 1, &WalkController::executeStepPlan, this);
+  load_plugin_by_name_sub_ = nh.subscribe("load_plugin_by_name", 1, &WalkController::loadPluginByName, this);
+  execute_step_plan_sub_ = nh.subscribe("execute_step_plan", 1, &WalkController::executeStepPlan, this);
 
   // publish topics
-  planning_feedback_pub = nh.advertise<msgs::ExecuteStepPlanFeedback>("execute_feedback", 1, true);
+  planning_feedback_pub_ = nh.advertise<msgs::ExecuteStepPlanFeedback>("execute_feedback", 1, true);
 
   // init action servers
-  execute_step_plan_as.reset(new ExecuteStepPlanActionServer(nh, "execute_step_plan", false));
-  execute_step_plan_as->registerGoalCallback(boost::bind(&WalkController::executeStepPlanAction, this, boost::ref(execute_step_plan_as)));
-  execute_step_plan_as->registerPreemptCallback(boost::bind(&WalkController::executePreemptionAction, this, boost::ref(execute_step_plan_as)));
+  execute_step_plan_as_.reset(new ExecuteStepPlanActionServer(nh, "execute_step_plan", false));
+  execute_step_plan_as_->registerGoalCallback(boost::bind(&WalkController::executeStepPlanAction, this, boost::ref(execute_step_plan_as_)));
+  execute_step_plan_as_->registerPreemptCallback(boost::bind(&WalkController::executePreemptionAction, this, boost::ref(execute_step_plan_as_)));
 
   // start action servers
-  execute_step_plan_as->start();
+  execute_step_plan_as_->start();
 
   // schedule main update loop
   if (auto_spin)
-    update_timer = nh.createTimer(nh.param("rate", 10.0), &WalkController::update, this);
+    update_timer_ = nh.createTimer(nh.param("rate", 10.0), &WalkController::update, this);
 }
 
 WalkController::~WalkController()
@@ -90,13 +90,13 @@ void WalkController::update(const ros::TimerEvent& event)
   switch (state)
   {
     case FINISHED:
-      if (execute_step_plan_as->isActive())
-        execute_step_plan_as->setSucceeded(msgs::ExecuteStepPlanResult());
+      if (execute_step_plan_as_->isActive())
+        execute_step_plan_as_->setSucceeded(msgs::ExecuteStepPlanResult());
       break;
 
     case FAILED:
-      if (execute_step_plan_as->isActive())
-        execute_step_plan_as->setAborted(msgs::ExecuteStepPlanResult());
+      if (execute_step_plan_as_->isActive())
+        execute_step_plan_as_->setAborted(msgs::ExecuteStepPlanResult());
       break;
 
     default:
@@ -114,10 +114,10 @@ void WalkController::publishFeedback() const
     const msgs::ExecuteStepPlanFeedback& feedback = walk_controller_plugin->getFeedback();
 
     // publish feedback
-    planning_feedback_pub.publish(feedback);
+    planning_feedback_pub_.publish(feedback);
 
-    if (execute_step_plan_as->isActive())
-      execute_step_plan_as->publishFeedback(feedback);
+    if (execute_step_plan_as_->isActive())
+      execute_step_plan_as_->publishFeedback(feedback);
   }
 }
 

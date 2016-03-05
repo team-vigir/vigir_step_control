@@ -44,7 +44,7 @@ public:
   virtual ~WalkControllerNode();
 
 protected:
-  WalkController::Ptr walk_controller;
+  WalkController::Ptr walk_controller_;
 };
 }
 

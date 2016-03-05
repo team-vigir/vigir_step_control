@@ -27,7 +27,7 @@ void WalkControllerTestPlugin::initWalk()
   feedback.first_changeable_step_index = 0;
   setFeedback(feedback);
 
-  next_step_needed_time = ros::Time::now();
+  next_step_needed_time_ = ros::Time::now();
 
   ROS_INFO("[WalkControllerTestPlugin] Start fake execution.");
 }
@@ -40,7 +40,7 @@ void WalkControllerTestPlugin::preProcess(const ros::TimerEvent& event)
     return;
 
   // fake succesful execution of single step
-  if (next_step_needed_time <= ros::Time::now())
+  if (next_step_needed_time_ <= ros::Time::now())
   {
     msgs::ExecuteStepPlanFeedback feedback = getFeedback();
 
@@ -48,7 +48,7 @@ void WalkControllerTestPlugin::preProcess(const ros::TimerEvent& event)
     feedback.last_performed_step_index++;
 
     // check for succesful execution of queue
-    if (walk_controller_queue->lastStepIndex() == feedback.last_performed_step_index)
+    if (walk_controller_queue_->lastStepIndex() == feedback.last_performed_step_index)
     {
       ROS_INFO("[WalkControllerTestPlugin] Fake execution finished.");
 
@@ -56,7 +56,7 @@ void WalkControllerTestPlugin::preProcess(const ros::TimerEvent& event)
       feedback.first_changeable_step_index = -1;
       setFeedback(feedback);
 
-      walk_controller_queue->reset();
+      walk_controller_queue_->reset();
       updateQueueFeedback();
 
       setState(FINISHED);
@@ -75,7 +75,7 @@ void WalkControllerTestPlugin::preProcess(const ros::TimerEvent& event)
 
 bool WalkControllerTestPlugin::executeStep(const msgs::Step& step)
 {
-  next_step_needed_time = ros::Time::now() + ros::Duration(1.0 + step.step_duration);
+  next_step_needed_time_ = ros::Time::now() + ros::Duration(1.0 + step.step_duration);
   ROS_INFO("[WalkControllerTestPlugin] Fake execution of step %i", step.step_index);
   return true;
 }
