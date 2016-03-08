@@ -156,4 +156,4 @@ void WalkController::executePreemptionAction(ExecuteStepPlanActionServerPtr& as)
 
   //walk_controller_plugin->stop();
 }
-}
+} // namespace

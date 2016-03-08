@@ -1,7 +1,5 @@
 #include <vigir_walk_control/walk_controller_test_plugin.h>
 
-#include <pluginlib/class_list_macros.h>
-
 
 
 namespace vigir_walk_control
@@ -79,6 +77,7 @@ bool WalkControllerTestPlugin::executeStep(const msgs::Step& step)
   ROS_INFO("[WalkControllerTestPlugin] Fake execution of step %i", step.step_index);
   return true;
 }
-}
+} // namespace
 
+#include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(vigir_walk_control::WalkControllerTestPlugin, vigir_walk_control::WalkControllerPlugin)

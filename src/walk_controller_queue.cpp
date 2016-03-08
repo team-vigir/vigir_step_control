@@ -1,5 +1,7 @@
 #include <vigir_walk_control/walk_controller_queue.h>
 
+
+
 namespace vigir_walk_control
 {
 WalkControllerQueue::WalkControllerQueue()
@@ -174,4 +176,4 @@ int WalkControllerQueue::lastStepIndex() const
   else
     return -1;
 }
-}
+} // namespace

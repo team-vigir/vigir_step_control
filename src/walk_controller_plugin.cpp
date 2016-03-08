@@ -206,4 +206,4 @@ void WalkControllerPlugin::stop()
   ROS_INFO("[WalkControllerTestPlugin] Stop requested. Resetting walk controller.");
   reset();
 }
-}
+} // namespace

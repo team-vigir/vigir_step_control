@@ -15,7 +15,7 @@ WalkControllerNode::WalkControllerNode(ros::NodeHandle& nh)
 WalkControllerNode::~WalkControllerNode()
 {
 }
-}
+} // namespace
 
 int main(int argc, char **argv)
 {
