@@ -123,22 +123,22 @@ public:
   virtual void preProcess(const ros::TimerEvent& event);
 
   /**
-   * @brief Process Overwrite to handle robot specific behavior. The default behavior behaves followed:
-   * - Each step in [0; feedback.first_changeable_step_index) will be removed from execution row
+   * @brief Process Overwrite to handle robot specific behavior. The default behavior behaves as followed:
+   * - Each step in [0; feedback.first_changeable_step_index) will be removed from execution queue
    * - For each step s in queue with index in (last_step_index_sent; next_step_index_needed] executeStep(s)
    *   will be called. Hereby, lastStepIndexSent will be automatically updated.
    */
   virtual void process(const ros::TimerEvent& event);
 
   /**
-   * @brief PostProcess Method is called after processing step, e.g. sum up current status and cleanups.
+   * @brief PostProcess Method is called after processing step, in purpose to sum up current status and cleanups for instance.
    * The default implementation resets the plugin when execution has been finshed or has failed.
    */
   virtual void postProcess(const ros::TimerEvent& /*event*/) {}
 
   /**
-   * @brief This method will be called when a new step should be executed. The call of this function should be triggered
-   * by the process(...) method when nextStepIndexNeeded has been changed.
+   * @brief This method will be called when the next step should be added to execution pipeline. The call of this function should
+   * be triggered by the process(...) method when nextStepIndexNeeded has been changed.
    * @param step
    */
   virtual bool executeStep(const msgs::Step& step) = 0;

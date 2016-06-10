@@ -33,7 +33,10 @@
 
 #include <actionlib/server/simple_action_server.h>
 
+#include <vigir_pluginlib/plugin_manager.h>
+
 #include <vigir_footstep_planning_msgs/footstep_planning_msgs.h>
+#include <vigir_footstep_planning_plugins/step_plan_msg_plugin.h>
 
 #include <vigir_walk_control/walk_controller_plugin.h>
 
@@ -62,12 +65,35 @@ public:
   virtual ~WalkController();
 
   /**
-   * @brief Loads plugin with specific name to be used by the controller. The name should be configured in
-   * the plugin config file and loaded to the rosparam server. The call can only succeed when currently no
-   * exection is runnning.
+   * @brief Loads plugin with specific name to be used by the controller. The name should be configured
+   * in the plugin config file and loaded to the rosparam server. The call can only succeed when currentl
+   * no exection is runnning.
    * @param plugin_name Name of plugin
    */
-  void loadPluginByName(const std::string& plugin_name);
+  template<typename T>
+  void loadPlugin(const std::string& plugin_name, boost::shared_ptr<T>& plugin)
+  {
+    boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
+
+    if (walk_controller_plugin_ && walk_controller_plugin_->getState() == ACTIVE)
+    {
+      ROS_ERROR("[WalkController] Cannot replace plugin due to active footstep execution!");
+      return;
+    }
+
+    if (!vigir_pluginlib::PluginManager::addPluginByName(plugin_name))
+    {
+      ROS_ERROR("[WalkController] Could not load plugin '%s'!", plugin_name.c_str());
+      return;
+    }
+    else if (!vigir_pluginlib::PluginManager::getPlugin(plugin))
+    {
+      ROS_ERROR("[WalkController] Could not obtain plugin '%s' from plugin manager!", plugin_name.c_str());
+      return;
+    }
+    else
+      ROS_INFO("[WalkController] Loaded plugin '%s'.", plugin_name.c_str());
+  }
 
   /**
    * @brief Instruct the controller to execute the given step plan. If execution is already in progress,
@@ -86,16 +112,18 @@ protected:
    * @brief Publishes feedback messages of current state of execution.
    */
   void publishFeedback() const;
-  
-  WalkControllerPlugin::Ptr walk_controller_plugin;
-  
+
+  vigir_footstep_planning::StepPlanMsgPlugin::Ptr step_plan_msg_plugin_;
+  WalkControllerPlugin::Ptr walk_controller_plugin_;
+
   // mutex to ensure thread safeness
   boost::shared_mutex controller_mutex_;
 
   /// ROS API
 
   // subscriber
-  void loadPluginByName(const std_msgs::StringConstPtr& plugin_name);
+  void loadStepPlanMsgPlugin(const std_msgs::StringConstPtr& plugin_name);
+  void loadWalkControllerPlugin(const std_msgs::StringConstPtr& plugin_name);
   void executeStepPlan(const msgs::StepPlanConstPtr& step_plan);
 
   // action server calls
@@ -103,7 +131,8 @@ protected:
   void executePreemptionAction(ExecuteStepPlanActionServerPtr& as);
 
   // subscriber
-  ros::Subscriber load_plugin_by_name_sub_;
+  ros::Subscriber load_step_plan_msg_plugin_sub_;
+  ros::Subscriber load_walk_controller_plugin_sub_;
   ros::Subscriber execute_step_plan_sub_;
 
   // publisher

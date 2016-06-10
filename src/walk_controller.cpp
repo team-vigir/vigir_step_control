@@ -1,7 +1,6 @@
 #include <vigir_walk_control/walk_controller.h>
 
 #include <vigir_generic_params/parameter_manager.h>
-#include <vigir_pluginlib/plugin_manager.h>
 
 
 
@@ -9,14 +8,18 @@ namespace vigir_walk_control
 {
 WalkController::WalkController(ros::NodeHandle& nh, bool auto_spin)
 {
+  vigir_pluginlib::PluginManager::addPluginClassLoader<vigir_footstep_planning::StepPlanMsgPlugin>("vigir_footstep_planning_plugins", "vigir_footstep_planning::StepPlanMsgPlugin");
   vigir_pluginlib::PluginManager::addPluginClassLoader<WalkControllerPlugin>("vigir_walk_control", "vigir_walk_control::WalkControllerPlugin");
 
+  // init step plan msg plugin
+  loadPlugin(nh.param("step_plan_msg_plugin", std::string("step_plan_msg_plugin")), step_plan_msg_plugin_);
+
   // init walk controller plugin
-  std::string plugin_name = nh.param("plugin", std::string("walk_controller_test_plugin"));
-  loadPluginByName(plugin_name);
+  loadPlugin(nh.param("walk_controller_plugin", std::string("walk_controller_test_plugin")), walk_controller_plugin_);
 
   // subscribe topics
-  load_plugin_by_name_sub_ = nh.subscribe("load_plugin_by_name", 1, &WalkController::loadPluginByName, this);
+  load_step_plan_msg_plugin_sub_ = nh.subscribe("load_step_plan_msg_plugin", 1, &WalkController::loadStepPlanMsgPlugin, this);
+  load_walk_controller_plugin_sub_ = nh.subscribe("load_walk_controller_plugin", 1, &WalkController::loadWalkControllerPlugin, this);
   execute_step_plan_sub_ = nh.subscribe("execute_step_plan", 1, &WalkController::executeStepPlan, this);
 
   // publish topics
@@ -39,55 +42,34 @@ WalkController::~WalkController()
 {
 }
 
-void WalkController::loadPluginByName(const std::string& plugin_name)
-{
-  boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
-
-  if (walk_controller_plugin && walk_controller_plugin->getState() != IDLE)
-  {
-    ROS_ERROR("[WalkController] Cannot replace plugin due to active footstep execution!");
-    return;
-  }
-
-  if (!vigir_pluginlib::PluginManager::addPluginByName(plugin_name))
-  {
-    ROS_ERROR("[WalkController] Could not load plugin '%s'!", plugin_name.c_str());
-    return;
-  }
-  else
-    ROS_INFO("[WalkController] Loaded plugin '%s'.", plugin_name.c_str());
-
-  vigir_pluginlib::PluginManager::getPlugin(walk_controller_plugin);
-}
-
 void WalkController::executeStepPlan(const msgs::StepPlan& step_plan)
 {
   boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
 
   // An empty step plan will always trigger a soft stop
   if (step_plan.steps.empty())
-    walk_controller_plugin->stop();
+    walk_controller_plugin_->stop();
   else
-    walk_controller_plugin->updateStepPlan(step_plan);
+    walk_controller_plugin_->updateStepPlan(step_plan);
 }
 
 void WalkController::update(const ros::TimerEvent& event)
 {
   boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
 
-  if (!walk_controller_plugin)
+  if (!walk_controller_plugin_)
     return;
 
   // Save current state to be able to handle action server correctly;
   // We must not send setSucceeded/setAborted state while sending the
   // final feedback message in the same update cycle!
-  WalkControllerState state = walk_controller_plugin->getState();
+  WalkControllerState state = walk_controller_plugin_->getState();
 
   // pre process
-  walk_controller_plugin->preProcess(event);
+  walk_controller_plugin_->preProcess(event);
 
   // process
-  walk_controller_plugin->process(event);
+  walk_controller_plugin_->process(event);
 
   // publish feedback
   publishFeedback();
@@ -110,14 +92,14 @@ void WalkController::update(const ros::TimerEvent& event)
   }
 
   // post process
-  walk_controller_plugin->postProcess(event);
+  walk_controller_plugin_->postProcess(event);
 }
 
 void WalkController::publishFeedback() const
 {
-  if (walk_controller_plugin->getState() != IDLE)
+  if (walk_controller_plugin_->getState() != IDLE)
   {
-    const msgs::ExecuteStepPlanFeedback& feedback = walk_controller_plugin->getFeedback();
+    const msgs::ExecuteStepPlanFeedback& feedback = walk_controller_plugin_->getFeedback();
 
     // publish feedback
     planning_feedback_pub_.publish(feedback);
@@ -129,9 +111,14 @@ void WalkController::publishFeedback() const
 
 // --- Subscriber calls ---
 
-void WalkController::loadPluginByName(const std_msgs::StringConstPtr& plugin_name)
+void WalkController::loadStepPlanMsgPlugin(const std_msgs::StringConstPtr& plugin_name)
 {
-  loadPluginByName(plugin_name->data);
+  loadPlugin(plugin_name->data, step_plan_msg_plugin_);
+}
+
+void WalkController::loadWalkControllerPlugin(const std_msgs::StringConstPtr& plugin_name)
+{
+  loadPlugin(plugin_name->data, walk_controller_plugin_);
 }
 
 void WalkController::executeStepPlan(const msgs::StepPlanConstPtr& step_plan)
