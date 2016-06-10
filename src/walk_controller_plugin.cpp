@@ -46,6 +46,17 @@ void WalkControllerPlugin::reset()
   setLastStepIndexSent(-1);
 }
 
+void WalkControllerPlugin::setStepPlanMsgPlugin(vigir_footstep_planning::StepPlanMsgPlugin::Ptr plugin)
+{
+  if (!plugin)
+  {
+    ROS_ERROR("[WalkControllerPlugin] Null pointer to StepPlanMsgPlugin rejected! Fix it immediately!");
+    return;
+  }
+
+  step_plan_msg_plugin_ = plugin;
+}
+
 WalkControllerState WalkControllerPlugin::getState() const
 {
   boost::shared_lock<boost::shared_mutex> lock(plugin_mutex_);

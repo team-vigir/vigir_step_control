@@ -33,6 +33,8 @@
 
 #include <vigir_pluginlib/plugin.h>
 
+#include <vigir_footstep_planning_plugins/step_plan_msg_plugin.h>
+
 #include <vigir_walk_control/walk_controller_queue.h>
 
 
@@ -67,6 +69,12 @@ public:
    * @brief Resets the plugin. When an execution is active, stop() will be called.
    */
   virtual void reset();
+
+  /**
+   * @brief Sets the StepPlanMsgPlugin to be used.
+   * @param plugin Plugin of type StepPlanMsgPlugin
+   */
+  void setStepPlanMsgPlugin(vigir_footstep_planning::StepPlanMsgPlugin::Ptr plugin);
 
   /**
    * @brief Get current state of execution.
@@ -158,6 +166,8 @@ protected:
   void setFeedback(const msgs::ExecuteStepPlanFeedback& feedback);
 
   WalkControllerQueue::Ptr walk_controller_queue_;
+
+  vigir_footstep_planning::StepPlanMsgPlugin::Ptr step_plan_msg_plugin_;
 
   // mutex to ensure thread safeness
   mutable boost::shared_mutex plugin_mutex_;

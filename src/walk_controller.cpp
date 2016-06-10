@@ -16,6 +16,8 @@ WalkController::WalkController(ros::NodeHandle& nh, bool auto_spin)
 
   // init walk controller plugin
   loadPlugin(nh.param("walk_controller_plugin", std::string("walk_controller_test_plugin")), walk_controller_plugin_);
+  if (walk_controller_plugin_)
+    walk_controller_plugin_->setStepPlanMsgPlugin(step_plan_msg_plugin_);
 
   // subscribe topics
   load_step_plan_msg_plugin_sub_ = nh.subscribe("load_step_plan_msg_plugin", 1, &WalkController::loadStepPlanMsgPlugin, this);
@@ -114,11 +116,17 @@ void WalkController::publishFeedback() const
 void WalkController::loadStepPlanMsgPlugin(const std_msgs::StringConstPtr& plugin_name)
 {
   loadPlugin(plugin_name->data, step_plan_msg_plugin_);
+
+  if (walk_controller_plugin_)
+    walk_controller_plugin_->setStepPlanMsgPlugin(step_plan_msg_plugin_);
 }
 
 void WalkController::loadWalkControllerPlugin(const std_msgs::StringConstPtr& plugin_name)
 {
   loadPlugin(plugin_name->data, walk_controller_plugin_);
+
+  if (walk_controller_plugin_)
+    walk_controller_plugin_->setStepPlanMsgPlugin(step_plan_msg_plugin_);
 }
 
 void WalkController::executeStepPlan(const msgs::StepPlanConstPtr& step_plan)
