@@ -77,17 +77,20 @@ public:
   void executeStepPlan(const msgs::StepPlan& step_plan);
 
   /**
-   * @brief Publishes feedback messages of current state of execution.
-   */
-  void publishFeedback() const;
-
-  /**
    * @brief Main update loop to be called in regular intervals.
    */
   void update(const ros::TimerEvent& event = ros::TimerEvent());
 
 protected:
+  /**
+   * @brief Publishes feedback messages of current state of execution.
+   */
+  void publishFeedback() const;
+  
   WalkControllerPlugin::Ptr walk_controller_plugin;
+  
+  // mutex to ensure thread safeness
+  boost::shared_mutex controller_mutex_;
 
   /// ROS API
 
@@ -109,6 +112,7 @@ protected:
   // action servers
   boost::shared_ptr<ExecuteStepPlanActionServer> execute_step_plan_as_;
 
+  // timer for updating periodically
   ros::Timer update_timer_;
 };
 }

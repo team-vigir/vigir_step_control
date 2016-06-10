@@ -1,4 +1,4 @@
-#include <vigir_walk_control/walk_controller_node.h>
+#include <vigir_walk_control/walk_controller.h>
 
 #include <vigir_generic_params/parameter_manager.h>
 #include <vigir_pluginlib/plugin_manager.h>
@@ -41,6 +41,8 @@ WalkController::~WalkController()
 
 void WalkController::loadPluginByName(const std::string& plugin_name)
 {
+  boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
+
   if (walk_controller_plugin && walk_controller_plugin->getState() != IDLE)
   {
     ROS_ERROR("[WalkController] Cannot replace plugin due to active footstep execution!");
@@ -60,6 +62,8 @@ void WalkController::loadPluginByName(const std::string& plugin_name)
 
 void WalkController::executeStepPlan(const msgs::StepPlan& step_plan)
 {
+  boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
+
   // An empty step plan will always trigger a soft stop
   if (step_plan.steps.empty())
     walk_controller_plugin->stop();
@@ -69,6 +73,8 @@ void WalkController::executeStepPlan(const msgs::StepPlan& step_plan)
 
 void WalkController::update(const ros::TimerEvent& event)
 {
+  boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
+
   if (!walk_controller_plugin)
     return;
 
