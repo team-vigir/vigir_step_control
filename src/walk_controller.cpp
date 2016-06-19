@@ -99,9 +99,9 @@ void WalkController::update(const ros::TimerEvent& event)
 
 void WalkController::publishFeedback() const
 {
-  if (walk_controller_plugin_->getState() != IDLE)
+  if (walk_controller_plugin_->getState() != READY)
   {
-    const msgs::ExecuteStepPlanFeedback& feedback = walk_controller_plugin_->getFeedback();
+    const msgs::ExecuteStepPlanFeedback& feedback = walk_controller_plugin_->getFeedbackState();
 
     // publish feedback
     planning_feedback_pub_.publish(feedback);

@@ -96,18 +96,18 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 ## Specify additional locations of header files
 set(HEADERS
+  include/${PROJECT_NAME}/step_queue.h
   include/${PROJECT_NAME}/walk_controller.h
   include/${PROJECT_NAME}/walk_controller_node.h
   include/${PROJECT_NAME}/walk_controller_plugin.h
-  include/${PROJECT_NAME}/walk_controller_queue.h
   include/${PROJECT_NAME}/walk_controller_test_plugin.h
 )
 
 set(SOURCES
+  src/step_queue.cpp
   src/walk_controller.cpp
   src/walk_controller_node.cpp
   src/walk_controller_plugin.cpp
-  src/walk_controller_queue.cpp
   src/walk_controller_test_plugin.cpp
 )
 

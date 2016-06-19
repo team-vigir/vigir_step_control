@@ -8,20 +8,21 @@ std::string toString(const WalkControllerState& state)
 {
   switch (state)
   {
-    case IDLE: return "IDLE";
-    case ACTIVE: return "ACTIVE";
-    case PAUSED: return "PAUSED";
-    case FINISHED: return "FINISHED";
-    case FAILED: return "FAILED";
-    default: return "UNKNOWN";
+    case NOT_READY:   return "NOT_READY";
+    case READY:       return "READY";
+    case ACTIVE:      return "ACTIVE";
+    case PAUSED:      return "PAUSED";
+    case FINISHED:    return "FINISHED";
+    case FAILED:      return "FAILED";
+    default:          return "UNKNOWN";
   }
 }
 
 WalkControllerPlugin::WalkControllerPlugin()
   : vigir_pluginlib::Plugin("walk_controller")
-  , state_(IDLE)
+  , state_(NOT_READY)
 {
-  walk_controller_queue_.reset(new WalkControllerQueue());
+  step_queue_.reset(new StepQueue());
 
   reset();
 }
@@ -30,24 +31,10 @@ WalkControllerPlugin::~WalkControllerPlugin()
 {
 }
 
-void WalkControllerPlugin::reset()
-{
-  setState(IDLE);
-
-  walk_controller_queue_->reset();
-
-  msgs::ExecuteStepPlanFeedback feedback;
-  feedback.last_performed_step_index = -1;
-  feedback.currently_executing_step_index = -1;
-  feedback.first_changeable_step_index = -1;
-  setFeedback(feedback);
-
-  setNextStepIndexNeeded(-1);
-  setLastStepIndexSent(-1);
-}
-
 void WalkControllerPlugin::setStepPlanMsgPlugin(vigir_footstep_planning::StepPlanMsgPlugin::Ptr plugin)
 {
+  boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
+
   if (!plugin)
   {
     ROS_ERROR("[WalkControllerPlugin] Null pointer to StepPlanMsgPlugin rejected! Fix it immediately!");
@@ -75,10 +62,26 @@ int WalkControllerPlugin::getLastStepIndexSent() const
   return last_step_index_sent_;
 }
 
-const msgs::ExecuteStepPlanFeedback& WalkControllerPlugin::getFeedback() const
+const msgs::ExecuteStepPlanFeedback& WalkControllerPlugin::getFeedbackState() const
 {
   boost::shared_lock<boost::shared_mutex> lock(plugin_mutex_);
-  return feedback_;
+  return feedback_state_;
+}
+
+void WalkControllerPlugin::reset()
+{
+  step_queue_->reset();
+
+  msgs::ExecuteStepPlanFeedback feedback;
+  feedback.last_performed_step_index = -1;
+  feedback.currently_executing_step_index = -1;
+  feedback.first_changeable_step_index = -1;
+  setFeedbackState(feedback);
+
+  setNextStepIndexNeeded(-1);
+  setLastStepIndexSent(-1);
+
+  setState(READY);
 }
 
 void WalkControllerPlugin::setState(WalkControllerState state)
@@ -86,7 +89,7 @@ void WalkControllerPlugin::setState(WalkControllerState state)
   boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
   ROS_INFO("[WalkControllerPlugin] Switching state from '%s' to '%s'.", toString(this->state_).c_str(), toString(state).c_str());
   this->state_ = state;
-  feedback_.controller_state = state;
+  feedback_state_.controller_state = state;
 }
 
 void WalkControllerPlugin::setNextStepIndexNeeded(int index)
@@ -101,18 +104,18 @@ void WalkControllerPlugin::setLastStepIndexSent(int index)
   last_step_index_sent_ = index;
 }
 
-void WalkControllerPlugin::setFeedback(const msgs::ExecuteStepPlanFeedback& feedback)
+void WalkControllerPlugin::setFeedbackState(const msgs::ExecuteStepPlanFeedback& feedback)
 {
   boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
-  this->feedback_ = feedback;
+  this->feedback_state_ = feedback;
 }
 
 void WalkControllerPlugin::updateQueueFeedback()
 {
   boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
-  feedback_.queue_size = static_cast<int>(walk_controller_queue_->size());
-  feedback_.first_queued_step_index = walk_controller_queue_->firstStepIndex();
-  feedback_.last_queued_step_index = walk_controller_queue_->lastStepIndex();
+  feedback_state_.queue_size = static_cast<int>(step_queue_->size());
+  feedback_state_.first_queued_step_index = step_queue_->firstStepIndex();
+  feedback_state_.last_queued_step_index = step_queue_->lastStepIndex();
 }
 
 void WalkControllerPlugin::updateStepPlan(const msgs::StepPlan& step_plan)
@@ -121,23 +124,25 @@ void WalkControllerPlugin::updateStepPlan(const msgs::StepPlan& step_plan)
     return;
 
   // Reset controller if previous execution was finished or has failed
-  if (state_ == FINISHED || state_ == FAILED)
+  WalkControllerState state = getState();
+  if (state == FINISHED || state == FAILED)
     reset();
 
-  // Allow step plan updates only in IDLE and ACTIVE state
-  WalkControllerState state = getState();
-  if (state == IDLE || state == ACTIVE)
+  // Allow step plan updates only in READY and ACTIVE state
+  state = getState();
+  if (state == READY || state == ACTIVE)
   {
-    msgs::ExecuteStepPlanFeedback feedback = getFeedback();
+    msgs::ExecuteStepPlanFeedback feedback = getFeedbackState();
 
-    if (walk_controller_queue_->updateStepPlan(step_plan, feedback.first_changeable_step_index))
+    if (step_queue_->updateStepPlan(step_plan, feedback.first_changeable_step_index))
     {
+      // resets last_step_index_sent counter to trigger (re)executing steps in process()
       if (state == ACTIVE)
         setLastStepIndexSent(feedback.first_changeable_step_index-1);
 
       updateQueueFeedback();
 
-      ROS_INFO("[WalkControllerPlugin] Updated step queue. Current queue has steps in range [%i; %i].", walk_controller_queue_->firstStepIndex(), walk_controller_queue_->lastStepIndex());
+      ROS_INFO("[WalkControllerPlugin] Updated step queue. Current queue has steps in range [%i; %i].", step_queue_->firstStepIndex(), step_queue_->lastStepIndex());
     }
   }
 }
@@ -145,10 +150,10 @@ void WalkControllerPlugin::updateStepPlan(const msgs::StepPlan& step_plan)
 void WalkControllerPlugin::preProcess(const ros::TimerEvent& /*event*/)
 {
   // check if new walking request has been done
-  if (getState() == IDLE && !walk_controller_queue_->empty())
+  if (getState() == READY && !step_queue_->empty())
   {
     // check consisty
-    if (walk_controller_queue_->firstStepIndex() != 0)
+    if (step_queue_->firstStepIndex() != 0)
     {
       ROS_ERROR("[WalkControllerTestPlugin] Step plan doesn't start with initial step (step_index = 0). Execution aborted!");
       setState(FAILED);
@@ -156,7 +161,6 @@ void WalkControllerPlugin::preProcess(const ros::TimerEvent& /*event*/)
     else
     {
       initWalk();
-      setState(ACTIVE);
     }
   }
 }
@@ -170,7 +174,7 @@ void WalkControllerPlugin::process(const ros::TimerEvent& /*event*/)
     while (getLastStepIndexSent() < getNextStepIndexNeeded())
     {
       // check if queue isn't empty
-      if (walk_controller_queue_->empty())
+      if (step_queue_->empty())
       {
         ROS_ERROR("[WalkControllerTestPlugin] Step %i required but not in queue. Execution aborted!", getNextStepIndexNeeded());
         setState(FAILED);
@@ -182,7 +186,7 @@ void WalkControllerPlugin::process(const ros::TimerEvent& /*event*/)
       msgs::Step step;
 
       // retrieve next step
-      if (!walk_controller_queue_->getStep(step, next_step_index))
+      if (!step_queue_->getStep(step, next_step_index))
       {
         ROS_ERROR("[WalkControllerTestPlugin] Missing step %i in queue. Execution aborted!", next_step_index);
         setState(FAILED);
@@ -200,11 +204,11 @@ void WalkControllerPlugin::process(const ros::TimerEvent& /*event*/)
       // increment last_step_index_sent
       setLastStepIndexSent(next_step_index);
 
-      msgs::ExecuteStepPlanFeedback feedback = getFeedback();
+      msgs::ExecuteStepPlanFeedback feedback = getFeedbackState();
 
       // garbage collection: remove already executed steps
       if (feedback.last_performed_step_index >= 0)
-        walk_controller_queue_->removeSteps(0, feedback.last_performed_step_index);
+        step_queue_->removeSteps(0, feedback.last_performed_step_index);
 
       // update feedback
       updateQueueFeedback();
@@ -214,6 +218,8 @@ void WalkControllerPlugin::process(const ros::TimerEvent& /*event*/)
 
 void WalkControllerPlugin::stop()
 {
+  boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
+
   ROS_INFO("[WalkControllerTestPlugin] Stop requested. Resetting walk controller.");
   reset();
 }

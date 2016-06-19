@@ -26,8 +26,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
-#ifndef WALK_CONTROLLER_QUEUE_H__
-#define WALK_CONTROLLER_QUEUE_H__
+#ifndef VIGIR_STEP_QUEUE_H__
+#define VIGIR_STEP_QUEUE_H__
 
 #include <ros/ros.h>
 
@@ -40,15 +40,15 @@ namespace vigir_walk_control
 {
 using namespace vigir_footstep_planning;
 
-class WalkControllerQueue
+class StepQueue
 {
 public:
   // typedefs
-  typedef boost::shared_ptr<WalkControllerQueue> Ptr;
-  typedef boost::shared_ptr<const WalkControllerQueue> ConstPtr;
+  typedef boost::shared_ptr<StepQueue> Ptr;
+  typedef boost::shared_ptr<const StepQueue> ConstPtr;
 
-  WalkControllerQueue();
-  virtual ~WalkControllerQueue();
+  StepQueue();
+  virtual ~StepQueue();
 
   void reset();
 
@@ -67,11 +67,10 @@ public:
   /**
    * @brief Merges given step plan to the current execution queue of steps. Hereby, two cases have to considered:
    * 1. In case of an empty execution queue (robot is standing) the step plan has to begin with step index 0.
-   * 2. In case of an non-empty execution queue (robot is walking) the first step of the step plan has to be
-   * identical with the corresponding step (=same step index) in the execution queue. Be aware that already executed
-   * steps have been popped from execution queue and therefore are not exisiting anymore.
+   * 2. In case of an non-empty execution queue (robot is walking)
+   * TODO: Stitching rules, new total step plan length
    * @param step_plan Step plan to be merged into execution queue.
-   * @param min_step_index Only steps having index >= min_step_index are considered for merge
+   * @param min_step_index Only steps with index >= min_step_index are considered for merge
    * @return True if step plan could be merged.
    */
   bool updateStepPlan(const msgs::StepPlan& step_plan, int min_step_index = 0);

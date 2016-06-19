@@ -1,36 +1,36 @@
-#include <vigir_walk_control/walk_controller_queue.h>
+#include <vigir_walk_control/step_queue.h>
 
 
 
 namespace vigir_walk_control
 {
-WalkControllerQueue::WalkControllerQueue()
+StepQueue::StepQueue()
 {
 }
 
-WalkControllerQueue::~WalkControllerQueue()
+StepQueue::~StepQueue()
 {
 }
 
-void WalkControllerQueue::reset()
+void StepQueue::reset()
 {
   boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
   step_plan_.clear();
 }
 
-bool WalkControllerQueue::empty() const
+bool StepQueue::empty() const
 {
   boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
   return step_plan_.empty();
 }
 
-size_t WalkControllerQueue::size() const
+size_t StepQueue::size() const
 {
   boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
   return step_plan_.size();
 }
 
-bool WalkControllerQueue::updateStepPlan(const msgs::StepPlan& step_plan, int min_step_index)
+bool StepQueue::updateStepPlan(const msgs::StepPlan& step_plan, int min_step_index)
 {
   if (step_plan.steps.empty())
     return true;
@@ -103,19 +103,19 @@ bool WalkControllerQueue::updateStepPlan(const msgs::StepPlan& step_plan, int mi
   return true;
 }
 
-bool WalkControllerQueue::getStep(msgs::Step& step, unsigned int step_index)
+bool StepQueue::getStep(msgs::Step& step, unsigned int step_index)
 {
   boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
   return step_plan_.getStep(step, step_index);
 }
 
-bool WalkControllerQueue::getStepAt(msgs::Step& step, unsigned int position)
+bool StepQueue::getStepAt(msgs::Step& step, unsigned int position)
 {
   boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
   return step_plan_.getStepAt(step, position);
 }
 
-std::vector<msgs::Step> WalkControllerQueue::getSteps(unsigned int start_index, unsigned int end_index) const
+std::vector<msgs::Step> StepQueue::getSteps(unsigned int start_index, unsigned int end_index) const
 {
   boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
 
@@ -131,31 +131,31 @@ std::vector<msgs::Step> WalkControllerQueue::getSteps(unsigned int start_index, 
   return steps;
 }
 
-void WalkControllerQueue::removeStep(unsigned int step_index)
+void StepQueue::removeStep(unsigned int step_index)
 {
   boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
   step_plan_.removeStep(step_index);
 }
 
-void WalkControllerQueue::removeSteps(unsigned int from_step_index, int to_step_index)
+void StepQueue::removeSteps(unsigned int from_step_index, int to_step_index)
 {
   boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
   step_plan_.removeSteps(from_step_index, to_step_index);
 }
 
-bool WalkControllerQueue::popStep(msgs::Step& step)
+bool StepQueue::popStep(msgs::Step& step)
 {
   boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
   return step_plan_.popStep(step);
 }
 
-bool WalkControllerQueue::popStep()
+bool StepQueue::popStep()
 {
   msgs::Step step;
   return popStep(step);
 }
 
-int WalkControllerQueue::firstStepIndex() const
+int StepQueue::firstStepIndex() const
 {
   boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
 
@@ -166,7 +166,7 @@ int WalkControllerQueue::firstStepIndex() const
     return -1;
 }
 
-int WalkControllerQueue::lastStepIndex() const
+int StepQueue::lastStepIndex() const
 {
   boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
 

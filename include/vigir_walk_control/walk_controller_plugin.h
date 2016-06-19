@@ -35,7 +35,7 @@
 
 #include <vigir_footstep_planning_plugins/step_plan_msg_plugin.h>
 
-#include <vigir_walk_control/walk_controller_queue.h>
+#include <vigir_walk_control/step_queue.h>
 
 
 
@@ -45,7 +45,8 @@ using namespace vigir_footstep_planning_msgs;
 
 enum WalkControllerState
 {
-  IDLE      = msgs::ExecuteStepPlanFeedback::IDLE,
+  NOT_READY = msgs::ExecuteStepPlanFeedback::NOT_READY,
+  READY     = msgs::ExecuteStepPlanFeedback::READY,
   ACTIVE    = msgs::ExecuteStepPlanFeedback::ACTIVE,
   PAUSED    = msgs::ExecuteStepPlanFeedback::PAUSED,
   FINISHED  = msgs::ExecuteStepPlanFeedback::FINISHED,
@@ -64,11 +65,6 @@ public:
 
   WalkControllerPlugin();
   virtual ~WalkControllerPlugin();
-
-  /**
-   * @brief Resets the plugin. When an execution is active, stop() will be called.
-   */
-  virtual void reset();
 
   /**
    * @brief Sets the StepPlanMsgPlugin to be used.
@@ -98,7 +94,7 @@ public:
    * @brief Returns current feedback information provided by the plugin
    * @return current feedback
    */
-  const msgs::ExecuteStepPlanFeedback& getFeedback() const;
+  const msgs::ExecuteStepPlanFeedback& getFeedbackState() const;
 
   /**
    * @brief Updates feedback information with internal state data.
@@ -106,66 +102,75 @@ public:
   void updateQueueFeedback();
 
   /**
-   * @brief Merges given step plan to the current execution queue of steps. Hereby, two cases have to considered:
-   * 1. In case of an empty execution queue (robot is standing) the step plan has to begin with step index 0.
-   * 2. In case of an non-empty execution queue (robot is walking) the first step of the step plan has to be
-   * identical with the corresponding step (=same step index) in the execution queue. Be aware that already executed
-   * steps have been popped from execution queue and therefore are not exisiting anymore.
-   * @param step_plan Step plan to be merged into execution queue.
+   * @brief Merges given step plan to the current step queue of steps. Hereby, two cases have to considered:
+   * 1. In case of an empty step queue (robot is standing) the step plan has to begin with step index 0.
+   * 2. In case of an non-empty step queue (robot is walking) the first step of the step plan has to be
+   * identical with the corresponding step (=same step index) in the step queue. Be aware that already performed
+   * steps have been popped from step queue and therefore are not exisiting anymore.
+   * The default implementation resets the plugin previously when in FINISHED or FAILED state.
+   * @param step_plan Step plan to be merged into step queue.
    */
   void updateStepPlan(const msgs::StepPlan& step_plan);
 
   /**
-   * @brief This method is called when new step plan has been enqueued and previously the walk controller state was IDLE.
+   * @brief This method is called when new step plan has been enqueued and previously the walk controller state was READY.
+   * This method must be override and set state to ACTIVE when everything has been set up successfully.
    */
-  virtual void initWalk() {}
+  virtual void initWalk() = 0;
 
   /**
-   * @brief PreProcess Method is called before processing walk controller, e.g. precompute/update data, check walking engine status.
-   * For keeping the default behavior running, following variables has to be updated here:
-   * - feedback.first_changeable_step_index
+   * @brief PreProcess Method is called before processing walk controller, e.g. for precompute/update data or check walking engine status.
+   * For keeping the default behavior running, following variables has to be properly updated here:
+   * - feedback.first_changeable_step_index (or update it in postProcess(...) or executeStep(...) alternatively)
+   * - feedback.last_performed_step_index (or update it in postProcess(...) or executeStep(...) alternatively)
    * - next_step_index_needed
+   * -- Note: Don't forget to update header data of feedback, when updating one of the mentioned values!
    * - setState(FINISEHD) when execution of all steps were successfully completed
-   * - setState(FAILED) when error has occured
+   * - setState(FAILED) when an error has occured
    */
   virtual void preProcess(const ros::TimerEvent& event);
 
   /**
-   * @brief Process Overwrite to handle robot specific behavior. The default behavior behaves as followed:
-   * - Each step in [0; feedback.first_changeable_step_index) will be removed from execution queue
-   * - For each step s in queue with index in (last_step_index_sent; next_step_index_needed] executeStep(s)
-   *   will be called. Hereby, lastStepIndexSent will be automatically updated.
+   * @brief Overwrite to handle robot specific behavior. The default behavior behaves as followed:
+   * - For each step s in queue with index in (last_step_index_sent_; next_step_index_needed_] executeStep(s)
+   *   will be called. Hereby, last_step_index_sent_ will be automatically updated.
+   * - Each step in [0; feedback.last_performed_step_index] will be removed from step queue
    */
   virtual void process(const ros::TimerEvent& event);
 
   /**
-   * @brief PostProcess Method is called after processing step, in purpose to sum up current status and cleanups for instance.
-   * The default implementation resets the plugin when execution has been finshed or has failed.
+   * @brief PostProcess Method is called after processing step, in purpose of sum up current status and cleanups for instance.
    */
   virtual void postProcess(const ros::TimerEvent& /*event*/) {}
 
   /**
    * @brief This method will be called when the next step should be added to execution pipeline. The call of this function should
-   * be triggered by the process(...) method when nextStepIndexNeeded has been changed.
-   * @param step
+   * be triggered by the process(...) method when next_step_index_needed_ has been changed.
+   * @param step Step to be executed now
    */
   virtual bool executeStep(const msgs::Step& step) = 0;
 
   /**
-   * @brief Will be called when (soft) stop is requested.
+   * @brief Will be called when (soft) stop is requested and resets plugin.
    */
   virtual void stop();
 
 protected:
+  /**
+   * @brief Resets the plugin (called during construction and by stop()).
+   * The default implementation raises the READY flag. Overwrite this method if another behavior is desired.
+   */
+  virtual void reset();
+
   void setState(WalkControllerState state);
 
   void setNextStepIndexNeeded(int index);
 
   void setLastStepIndexSent(int index);
 
-  void setFeedback(const msgs::ExecuteStepPlanFeedback& feedback);
+  void setFeedbackState(const msgs::ExecuteStepPlanFeedback& feedback);
 
-  WalkControllerQueue::Ptr walk_controller_queue_;
+  StepQueue::Ptr step_queue_;
 
   vigir_footstep_planning::StepPlanMsgPlugin::Ptr step_plan_msg_plugin_;
 
@@ -183,7 +188,7 @@ private:
   int last_step_index_sent_;
 
   // contains current feedback state; should be updated in each cycle
-  msgs::ExecuteStepPlanFeedback feedback_;
+  msgs::ExecuteStepPlanFeedback feedback_state_;
 };
 }
 
