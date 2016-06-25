@@ -35,13 +35,10 @@ void WalkControllerPlugin::setStepPlanMsgPlugin(vigir_footstep_planning::StepPla
 {
   boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
 
-  if (!plugin)
-  {
+  if (plugin)
+    step_plan_msg_plugin_ = plugin;
+  else
     ROS_ERROR("[WalkControllerPlugin] Null pointer to StepPlanMsgPlugin rejected! Fix it immediately!");
-    return;
-  }
-
-  step_plan_msg_plugin_ = plugin;
 }
 
 WalkControllerState WalkControllerPlugin::getState() const

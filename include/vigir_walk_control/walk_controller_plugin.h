@@ -70,7 +70,7 @@ public:
    * @brief Sets the StepPlanMsgPlugin to be used.
    * @param plugin Plugin of type StepPlanMsgPlugin
    */
-  void setStepPlanMsgPlugin(vigir_footstep_planning::StepPlanMsgPlugin::Ptr plugin);
+  virtual void setStepPlanMsgPlugin(vigir_footstep_planning::StepPlanMsgPlugin::Ptr plugin);
 
   /**
    * @brief Get current state of execution.
@@ -110,7 +110,7 @@ public:
    * The default implementation resets the plugin previously when in FINISHED or FAILED state.
    * @param step_plan Step plan to be merged into step queue.
    */
-  void updateStepPlan(const msgs::StepPlan& step_plan);
+  virtual void updateStepPlan(const msgs::StepPlan& step_plan);
 
   /**
    * @brief This method is called when new step plan has been enqueued and previously the walk controller state was READY.
