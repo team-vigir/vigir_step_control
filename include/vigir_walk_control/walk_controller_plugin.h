@@ -33,7 +33,7 @@
 
 #include <vigir_pluginlib/plugin.h>
 
-#include <vigir_footstep_planning_plugins/step_plan_msg_plugin.h>
+#include <vigir_footstep_planning_plugins/plugins/step_plan_msg_plugin.h>
 
 #include <vigir_walk_control/step_queue.h>
 
