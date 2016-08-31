@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package>
-  <name>vigir_walk_control</name>
-  <version>0.0.0</version>
-  <description>The vigir_walk_control package</description>
+  <name>vigir_step_control</name>
+  <version>0.1.0</version>
+  <description>The vigir_step_control package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but mutiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/vigir_walk_control</url> -->
+  <!-- <url type="website">http://wiki.ros.org/vigir_step_control</url> -->
 
 
   <!-- Author tags are optional, mutiple are allowed, one per tag -->
@@ -67,8 +67,8 @@
     <!-- <metapackage/> -->
 
     <!-- Other tools can request additional information be placed here -->
-    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lvigir_walk_control" />
+    <cpp cflags="-I${prefix}/include" lflags="-L${prefix}/lib -Wl,-rpath,${prefix}/lib -lvigir_step_control" />
 
-    <vigir_walk_control plugin="${prefix}/plugins.xml" />
+    <vigir_step_control plugin="${prefix}/plugins.xml" />
   </export>
 </package>

@@ -1,19 +1,19 @@
-#include <vigir_walk_control/walk_controller_test_plugin.h>
+#include <vigir_step_control/step_controller_test_plugin.h>
 
 
 
-namespace vigir_walk_control
+namespace vigir_step_control
 {
-WalkControllerTestPlugin::WalkControllerTestPlugin()
-  : WalkControllerPlugin()
-{
-}
-
-WalkControllerTestPlugin::~WalkControllerTestPlugin()
+StepControllerTestPlugin::StepControllerTestPlugin()
+  : StepControllerPlugin()
 {
 }
 
-void WalkControllerTestPlugin::initWalk()
+StepControllerTestPlugin::~StepControllerTestPlugin()
+{
+}
+
+void StepControllerTestPlugin::initWalk()
 {
   // init feedback states
   msgs::ExecuteStepPlanFeedback feedback;
@@ -27,12 +27,12 @@ void WalkControllerTestPlugin::initWalk()
 
   setState(ACTIVE);
 
-  ROS_INFO("[WalkControllerTestPlugin] Start fake execution.");
+  ROS_INFO("[StepControllerTestPlugin] Start fake execution.");
 }
 
-void WalkControllerTestPlugin::preProcess(const ros::TimerEvent& event)
+void StepControllerTestPlugin::preProcess(const ros::TimerEvent& event)
 {
-  WalkControllerPlugin::preProcess(event);
+  StepControllerPlugin::preProcess(event);
 
   if (getState() != ACTIVE)
     return;
@@ -48,7 +48,7 @@ void WalkControllerTestPlugin::preProcess(const ros::TimerEvent& event)
     // check for successful execution of queue
     if (step_queue_->lastStepIndex() == feedback.last_performed_step_index)
     {
-      ROS_INFO("[WalkControllerTestPlugin] Fake execution finished.");
+      ROS_INFO("[StepControllerTestPlugin] Fake execution finished.");
 
       feedback.currently_executing_step_index = -1;
       feedback.first_changeable_step_index = -1;
@@ -71,13 +71,13 @@ void WalkControllerTestPlugin::preProcess(const ros::TimerEvent& event)
   }
 }
 
-bool WalkControllerTestPlugin::executeStep(const msgs::Step& step)
+bool StepControllerTestPlugin::executeStep(const msgs::Step& step)
 {
   next_step_needed_time_ = ros::Time::now() + ros::Duration(1.0 + step.step_duration);
-  ROS_INFO("[WalkControllerTestPlugin] Fake execution of step %i", step.step_index);
+  ROS_INFO("[StepControllerTestPlugin] Fake execution of step %i", step.step_index);
   return true;
 }
 } // namespace
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(vigir_walk_control::WalkControllerTestPlugin, vigir_walk_control::WalkControllerPlugin)
+PLUGINLIB_EXPORT_CLASS(vigir_step_control::StepControllerTestPlugin, vigir_step_control::StepControllerPlugin)

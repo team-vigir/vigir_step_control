@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(vigir_walk_control)
+project(vigir_step_control)
 
-set(CMAKE_BUILD_TYPE Debug)
+#set(CMAKE_BUILD_TYPE Debug)
 #set(CMAKE_BUILD_TYPE RelWithDebInfo)
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
@@ -81,7 +81,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES vigir_walk_control
+  LIBRARIES vigir_step_control
   CATKIN_DEPENDS roscpp rospy actionlib_msgs actionlib std_msgs vigir_pluginlib vigir_footstep_planning_msgs vigir_footstep_planning_plugins
 #  DEPENDS system_lib
 )
@@ -97,25 +97,25 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 ## Specify additional locations of header files
 set(HEADERS
   include/${PROJECT_NAME}/step_queue.h
-  include/${PROJECT_NAME}/walk_controller.h
-  include/${PROJECT_NAME}/walk_controller_node.h
-  include/${PROJECT_NAME}/walk_controller_plugin.h
-  include/${PROJECT_NAME}/walk_controller_test_plugin.h
+  include/${PROJECT_NAME}/step_controller.h
+  include/${PROJECT_NAME}/step_controller_node.h
+  include/${PROJECT_NAME}/step_controller_plugin.h
+  include/${PROJECT_NAME}/step_controller_test_plugin.h
 )
 
 set(SOURCES
   src/step_queue.cpp
-  src/walk_controller.cpp
-  src/walk_controller_node.cpp
-  src/walk_controller_plugin.cpp
-  src/walk_controller_test_plugin.cpp
+  src/step_controller.cpp
+  src/step_controller_node.cpp
+  src/step_controller_plugin.cpp
+  src/step_controller_test_plugin.cpp
 )
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 
 ## Declare a cpp executable
-add_executable(walk_controller_node src/walk_controller_node.cpp)
+add_executable(step_controller_node src/step_controller_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -123,7 +123,7 @@ add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${boost_LIBRARIES})
-target_link_libraries(walk_controller_node ${PROJECT_NAME})
+target_link_libraries(step_controller_node ${PROJECT_NAME})
 
 #############
 ## Install ##
@@ -140,7 +140,7 @@ target_link_libraries(walk_controller_node ${PROJECT_NAME})
 # )
 
 ## Mark executables and/or libraries for installation
-install(TARGETS ${PROJECT_NAME} walk_controller_node
+install(TARGETS ${PROJECT_NAME} step_controller_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -168,7 +168,7 @@ install(FILES plugins.xml
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_vigir_walk_control.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_vigir_step_control.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

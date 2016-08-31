@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="namespace" default="vigir_walk_controller" />
+  <arg name="namespace" default="vigir_step_controller" />
   <group ns="$(arg namespace)">
     <!-- start walk controller -->
-    <node name="walk_controller" pkg="vigir_walk_control" type="walk_controller_node" respawn="true" output="screen" />
+    <node name="step_controller" pkg="vigir_step_control" type="step_controller_node" respawn="true" output="screen" />
 
     <!-- load plugin descriptions from YAML file to parameter server -->
     <rosparam file="$(find vigir_footstep_planning_plugins)/config/plugin_descriptions.yaml" command="load" />
-    <rosparam file="$(find vigir_walk_control)/config/plugin_descriptions.yaml" command="load" />
+    <rosparam file="$(find vigir_step_control)/config/plugin_descriptions.yaml" command="load" />
   </group>
 </launch>

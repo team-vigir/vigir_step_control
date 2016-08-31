@@ -36,7 +36,7 @@
 
 
 
-namespace vigir_walk_control
+namespace vigir_step_control
 {
 using namespace vigir_footstep_planning;
 

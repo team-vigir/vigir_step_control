@@ -26,25 +26,25 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
-#ifndef WALK_CONTROLLER_NODE_H__
-#define WALK_CONTROLLER_NODE_H__
+#ifndef STEP_CONTROLLER_NODE_H__
+#define STEP_CONTROLLER_NODE_H__
 
 #include <ros/ros.h>
 
-#include <vigir_walk_control/walk_controller.h>
+#include <vigir_step_control/step_controller.h>
 
 
 
-namespace vigir_walk_control
+namespace vigir_step_control
 {
-class WalkControllerNode
+class StepControllerNode
 {
 public:
-  WalkControllerNode(ros::NodeHandle& nh);
-  virtual ~WalkControllerNode();
+  StepControllerNode(ros::NodeHandle& nh);
+  virtual ~StepControllerNode();
 
 protected:
-  WalkController::Ptr walk_controller_;
+  StepController::Ptr step_controller_;
 };
 }
 

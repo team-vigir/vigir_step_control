@@ -26,29 +26,29 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
-#ifndef WALK_CONTROLLER_TEST_PLUGIN_H__
-#define WALK_CONTROLLER_TEST_PLUGIN_H__
+#ifndef STEP_CONTROLLER_TEST_PLUGIN_H__
+#define STEP_CONTROLLER_TEST_PLUGIN_H__
 
 #include <ros/ros.h>
 
-#include <vigir_walk_control/walk_controller_plugin.h>
+#include <vigir_step_control/step_controller_plugin.h>
 
 
 
-namespace vigir_walk_control
+namespace vigir_step_control
 {
 using namespace vigir_footstep_planning_msgs;
 
-class WalkControllerTestPlugin
-  : public WalkControllerPlugin
+class StepControllerTestPlugin
+  : public StepControllerPlugin
 {
 public:
   // typedefs
-  typedef boost::shared_ptr<WalkControllerTestPlugin> Ptr;
-  typedef boost::shared_ptr<const WalkControllerTestPlugin> ConstPtr;
+  typedef boost::shared_ptr<StepControllerTestPlugin> Ptr;
+  typedef boost::shared_ptr<const StepControllerTestPlugin> ConstPtr;
 
-  WalkControllerTestPlugin();
-  virtual ~WalkControllerTestPlugin();
+  StepControllerTestPlugin();
+  virtual ~StepControllerTestPlugin();
 
   /**
    * @brief We have to initialize all variables at beginning of new step plan

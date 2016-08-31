@@ -26,8 +26,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
-#ifndef WALK_CONTROLLER_H__
-#define WALK_CONTROLLER_H__
+#ifndef STEP_CONTROLLER_H__
+#define STEP_CONTROLLER_H__
 
 #include <ros/ros.h>
 
@@ -38,31 +38,31 @@
 #include <vigir_footstep_planning_msgs/footstep_planning_msgs.h>
 #include <vigir_footstep_planning_plugins/plugins/step_plan_msg_plugin.h>
 
-#include <vigir_walk_control/walk_controller_plugin.h>
+#include <vigir_step_control/step_controller_plugin.h>
 
 
 
-namespace vigir_walk_control
+namespace vigir_step_control
 {
 using namespace vigir_footstep_planning_msgs;
 
 typedef actionlib::SimpleActionServer<msgs::ExecuteStepPlanAction> ExecuteStepPlanActionServer;
 typedef boost::shared_ptr<ExecuteStepPlanActionServer> ExecuteStepPlanActionServerPtr;
 
-class WalkController
+class StepController
 {
 public:
   // typedefs
-  typedef boost::shared_ptr<WalkController> Ptr;
-  typedef boost::shared_ptr<const WalkController> ConstPtr;
+  typedef boost::shared_ptr<StepController> Ptr;
+  typedef boost::shared_ptr<const StepController> ConstPtr;
 
   /**
-   * @brief WalkController
+   * @brief StepController
    * @param nh Nodehandle living in correct namespace for all services
    * @param spin When true, the controller sets up it's own ros timer for calling update(...) continously.
    */
-  WalkController(ros::NodeHandle& nh, bool auto_spin = true);
-  virtual ~WalkController();
+  StepController(ros::NodeHandle& nh, bool auto_spin = true);
+  virtual ~StepController();
 
   /**
    * @brief Loads plugin with specific name to be used by the controller. The name should be configured
@@ -75,24 +75,24 @@ public:
   {
     boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
 
-    if (walk_controller_plugin_ && walk_controller_plugin_->getState() == ACTIVE)
+    if (step_controller_plugin_ && step_controller_plugin_->getState() == ACTIVE)
     {
-      ROS_ERROR("[WalkController] Cannot replace plugin due to active footstep execution!");
+      ROS_ERROR("[StepController] Cannot replace plugin due to active footstep execution!");
       return;
     }
 
     if (!vigir_pluginlib::PluginManager::addPluginByName(plugin_name))
     {
-      ROS_ERROR("[WalkController] Could not load plugin '%s'!", plugin_name.c_str());
+      ROS_ERROR("[StepController] Could not load plugin '%s'!", plugin_name.c_str());
       return;
     }
     else if (!vigir_pluginlib::PluginManager::getPlugin(plugin))
     {
-      ROS_ERROR("[WalkController] Could not obtain plugin '%s' from plugin manager!", plugin_name.c_str());
+      ROS_ERROR("[StepController] Could not obtain plugin '%s' from plugin manager!", plugin_name.c_str());
       return;
     }
     else
-      ROS_INFO("[WalkController] Loaded plugin '%s'.", plugin_name.c_str());
+      ROS_INFO("[StepController] Loaded plugin '%s'.", plugin_name.c_str());
   }
 
   /**
@@ -114,7 +114,7 @@ protected:
   void publishFeedback() const;
 
   vigir_footstep_planning::StepPlanMsgPlugin::Ptr step_plan_msg_plugin_;
-  WalkControllerPlugin::Ptr walk_controller_plugin_;
+  StepControllerPlugin::Ptr step_controller_plugin_;
 
   // mutex to ensure thread safeness
   boost::shared_mutex controller_mutex_;
@@ -123,7 +123,7 @@ protected:
 
   // subscriber
   void loadStepPlanMsgPlugin(const std_msgs::StringConstPtr& plugin_name);
-  void loadWalkControllerPlugin(const std_msgs::StringConstPtr& plugin_name);
+  void loadStepControllerPlugin(const std_msgs::StringConstPtr& plugin_name);
   void executeStepPlan(const msgs::StepPlanConstPtr& step_plan);
 
   // action server calls
@@ -132,7 +132,7 @@ protected:
 
   // subscriber
   ros::Subscriber load_step_plan_msg_plugin_sub_;
-  ros::Subscriber load_walk_controller_plugin_sub_;
+  ros::Subscriber load_step_controller_plugin_sub_;
   ros::Subscriber execute_step_plan_sub_;
 
   // publisher

@@ -1,8 +1,8 @@
-#include <vigir_walk_control/step_queue.h>
+#include <vigir_step_control/step_queue.h>
 
 
 
-namespace vigir_walk_control
+namespace vigir_step_control
 {
 StepQueue::StepQueue()
 {

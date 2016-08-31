@@ -26,8 +26,8 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //=================================================================================================
 
-#ifndef WALK_CONTROLLER_PLUGIN_H__
-#define WALK_CONTROLLER_PLUGIN_H__
+#ifndef STEP_CONTROLLER_PLUGIN_H__
+#define STEP_CONTROLLER_PLUGIN_H__
 
 #include <ros/ros.h>
 
@@ -35,15 +35,15 @@
 
 #include <vigir_footstep_planning_plugins/plugins/step_plan_msg_plugin.h>
 
-#include <vigir_walk_control/step_queue.h>
+#include <vigir_step_control/step_queue.h>
 
 
 
-namespace vigir_walk_control
+namespace vigir_step_control
 {
 using namespace vigir_footstep_planning_msgs;
 
-enum WalkControllerState
+enum StepControllerState
 {
   NOT_READY = msgs::ExecuteStepPlanFeedback::NOT_READY,
   READY     = msgs::ExecuteStepPlanFeedback::READY,
@@ -53,18 +53,18 @@ enum WalkControllerState
   FAILED    = msgs::ExecuteStepPlanFeedback::FAILED
 };
 
-std::string toString(const WalkControllerState& state);
+std::string toString(const StepControllerState& state);
 
-class WalkControllerPlugin
+class StepControllerPlugin
   : public vigir_pluginlib::Plugin
 {
 public:
   // typedefs
-  typedef boost::shared_ptr<WalkControllerPlugin> Ptr;
-  typedef boost::shared_ptr<const WalkControllerPlugin> ConstPtr;
+  typedef boost::shared_ptr<StepControllerPlugin> Ptr;
+  typedef boost::shared_ptr<const StepControllerPlugin> ConstPtr;
 
-  WalkControllerPlugin();
-  virtual ~WalkControllerPlugin();
+  StepControllerPlugin();
+  virtual ~StepControllerPlugin();
 
   /**
    * @brief Sets the StepPlanMsgPlugin to be used.
@@ -74,9 +74,9 @@ public:
 
   /**
    * @brief Get current state of execution.
-   * @return WalkControllerState
+   * @return StepControllerState
    */
-  WalkControllerState getState() const;
+  StepControllerState getState() const;
 
   /**
    * @brief Returns next step index needed by the walking engine
@@ -162,7 +162,7 @@ protected:
    */
   virtual void reset();
 
-  void setState(WalkControllerState state);
+  void setState(StepControllerState state);
 
   void setNextStepIndexNeeded(int index);
 
@@ -179,7 +179,7 @@ protected:
 
 private:
   // current state of walk controller
-  WalkControllerState state_;
+  StepControllerState state_;
 
   // next step index needed by walk engine
   int next_step_index_needed_;
