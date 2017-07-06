@@ -82,6 +82,8 @@ void StepController::update(const ros::TimerEvent& event)
   // process
   step_controller_plugin_->process(event);
 
+  lock.unlock();
+
   // publish feedback
   publishFeedback();
 
