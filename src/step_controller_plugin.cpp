@@ -115,10 +115,10 @@ void StepControllerPlugin::updateQueueFeedback()
   feedback_state_.last_queued_step_index = step_queue_->lastStepIndex();
 }
 
-void StepControllerPlugin::updateStepPlan(const msgs::StepPlan& step_plan)
+bool StepControllerPlugin::updateStepPlan(const msgs::StepPlan& step_plan)
 {
   if (step_plan.steps.empty())
-    return;
+    return true;
 
   // Reset controller if previous execution was finished or has failed
   StepControllerState state = getState();
@@ -140,8 +140,13 @@ void StepControllerPlugin::updateStepPlan(const msgs::StepPlan& step_plan)
       updateQueueFeedback();
 
       ROS_INFO("[StepControllerPlugin] Updated step queue. Current queue has steps in range [%i; %i].", step_queue_->firstStepIndex(), step_queue_->lastStepIndex());
+
+      return true;
     }
   }
+
+  setState(FAILED);
+  return false;
 }
 
 void StepControllerPlugin::preProcess(const ros::TimerEvent& /*event*/)
