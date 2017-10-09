@@ -157,7 +157,7 @@ void StepControllerPlugin::preProcess(const ros::TimerEvent& /*event*/)
     // check consisty
     if (step_queue_->firstStepIndex() != 0)
     {
-      ROS_ERROR("[StepControllerTestPlugin] Step plan doesn't start with initial step (step_index = 0). Execution aborted!");
+      ROS_ERROR("[StepControllerPlugin] Step plan doesn't start with initial step (step_index = 0). Execution aborted!");
       setState(FAILED);
     }
     else
@@ -178,7 +178,7 @@ void StepControllerPlugin::process(const ros::TimerEvent& /*event*/)
       // check if queue isn't empty
       if (step_queue_->empty())
       {
-        ROS_ERROR("[StepControllerTestPlugin] Step %i required but not in queue. Execution aborted!", getNextStepIndexNeeded());
+        ROS_ERROR("[StepControllerPlugin] Step %i required but queue is empty. Execution aborted!", getNextStepIndexNeeded());
         setState(FAILED);
         return;
       }
@@ -190,7 +190,7 @@ void StepControllerPlugin::process(const ros::TimerEvent& /*event*/)
       // retrieve next step
       if (!step_queue_->getStep(step, next_step_index))
       {
-        ROS_ERROR("[StepControllerTestPlugin] Missing step %i in queue. Execution aborted!", next_step_index);
+        ROS_ERROR("[StepControllerPlugin] Missing step %i in queue. Execution aborted!", next_step_index);
         setState(FAILED);
         return;
       }
@@ -198,7 +198,7 @@ void StepControllerPlugin::process(const ros::TimerEvent& /*event*/)
       // sent step to walking engine
       if (!executeStep(step))
       {
-        ROS_ERROR("[StepControllerTestPlugin] Error while execution request of step %i. Execution aborted!", next_step_index);
+        ROS_ERROR("[StepControllerPlugin] Error while execution request of step %i. Execution aborted!", next_step_index);
         setState(FAILED);
         return;
       }
@@ -210,7 +210,10 @@ void StepControllerPlugin::process(const ros::TimerEvent& /*event*/)
 
       // garbage collection: remove already executed steps
       if (feedback.last_performed_step_index >= 0)
+      {
         step_queue_->removeSteps(0, feedback.last_performed_step_index);
+        ROS_WARN("Removing steps [0; %i]", feedback.last_performed_step_index);
+      }
 
       // update feedback
       updateQueueFeedback();
@@ -222,7 +225,7 @@ void StepControllerPlugin::stop()
 {
   boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
 
-  ROS_INFO("[StepControllerTestPlugin] Stop requested. Resetting walk controller.");
+  ROS_INFO("[StepControllerPlugin] Stop requested. Resetting walk controller.");
   reset();
 }
 } // namespace
