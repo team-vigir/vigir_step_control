@@ -139,7 +139,7 @@ bool StepControllerPlugin::updateStepPlan(const msgs::StepPlan& step_plan)
 
       updateQueueFeedback();
 
-      ROS_INFO("[StepControllerPlugin] Updated step queue. Current queue has steps in range [%i; %i].", step_queue_->firstStepIndex(), step_queue_->lastStepIndex());
+      ROS_INFO("[StepControllerPlugin] Updated step queue from [%i; %i]. Current queue has steps in range [%i; %i].", step_plan.steps.front().step_index, step_plan.steps.back().step_index, step_queue_->firstStepIndex(), step_queue_->lastStepIndex());
 
       return true;
     }
@@ -195,6 +195,8 @@ void StepControllerPlugin::process(const ros::TimerEvent& /*event*/)
         return;
       }
 
+      ROS_ASSERT(next_step_index == step.step_index);
+
       // sent step to walking engine
       if (!executeStep(step))
       {
@@ -209,11 +211,8 @@ void StepControllerPlugin::process(const ros::TimerEvent& /*event*/)
       msgs::ExecuteStepPlanFeedback feedback = getFeedbackState();
 
       // garbage collection: remove already executed steps
-      if (feedback.last_performed_step_index >= 0)
-      {
+      if (step_queue_->firstStepIndex() <= feedback.last_performed_step_index)
         step_queue_->removeSteps(0, feedback.last_performed_step_index);
-        ROS_WARN("Removing steps [0; %i]", feedback.last_performed_step_index);
-      }
 
       // update feedback
       updateQueueFeedback();

@@ -65,6 +65,17 @@ public:
   size_t size() const;
 
   /**
+   * @brief Returns if step queue has been changed
+   * @return true if recent changes have been appleid
+   */
+  bool isDirty() const;
+
+  /**
+   * @brief Resets dirty flag
+   */
+  void clearDirtyFlag();
+
+  /**
    * @brief Merges given step plan to the current execution queue of steps. Hereby, two cases have to considered:
    * 1. In case of an empty execution queue (robot is standing) the step plan has to begin with step index 0.
    * 2. In case of an non-empty execution queue (robot is walking)
@@ -134,6 +145,8 @@ public:
 
 protected:
   StepPlan step_plan_;
+
+  bool is_dirty_;
 
   // mutex to ensure thread safeness
   mutable boost::shared_mutex queue_mutex_;

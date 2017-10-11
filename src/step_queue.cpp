@@ -16,6 +16,7 @@ void StepQueue::reset()
 {
   boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
   step_plan_.clear();
+  is_dirty_ = true;
 }
 
 bool StepQueue::empty() const
@@ -28,6 +29,16 @@ size_t StepQueue::size() const
 {
   boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
   return step_plan_.size();
+}
+
+bool StepQueue::isDirty() const
+{
+  return is_dirty_;
+}
+
+void StepQueue::clearDirtyFlag()
+{
+  is_dirty_ = false;
 }
 
 bool StepQueue::updateStepPlan(const msgs::StepPlan& step_plan, int min_step_index)
@@ -87,11 +98,11 @@ bool StepQueue::updateStepPlan(const msgs::StepPlan& step_plan, int min_step_ind
       geometry_msgs::Pose p_new = new_step.foot.pose;
       if (p_old.position.x != p_new.position.x || p_old.position.y != p_new.position.y || p_old.position.z != p_new.position.z)
       {
-        ROS_WARN("[StepQueue] updateStepPlan: Overlapping step differs in position!");
+        ROS_WARN("[StepQueue] updateStepPlan: Overlapping step differs in position! Delta: %f/%f/%f", p_new.position.x-p_old.position.x, p_new.position.y-p_old.position.y, p_new.position.z-p_old.position.z);
       }
       if (p_old.orientation.x != p_new.orientation.x || p_old.orientation.y != p_new.orientation.y || p_old.orientation.z != p_new.orientation.z || p_old.orientation.w != p_new.orientation.w)
       {
-        ROS_WARN("[StepQueue] updateStepPlan: Overlapping step differs in orientation!");
+        ROS_WARN("[StepQueue] updateStepPlan: Overlapping step differs in orientation! Delta: %f/%f/%f/%f", p_new.orientation.x-p_old.orientation.x, p_new.orientation.y-p_old.orientation.y, p_new.orientation.z-p_old.orientation.z, p_new.orientation.w-p_old.orientation.w);
       }
     }
   }
@@ -99,6 +110,8 @@ bool StepQueue::updateStepPlan(const msgs::StepPlan& step_plan, int min_step_ind
   /// merge step plan
   status += this->step_plan_.stitchStepPlan(step_plan, step_plan_start_index);
   this->step_plan_.removeSteps(step_plan.steps.rbegin()->step_index+1);
+
+  is_dirty_ = true;
 
   return isOk(status);
 }
@@ -135,23 +148,27 @@ void StepQueue::removeStep(unsigned int step_index)
 {
   boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
   step_plan_.removeStep(step_index);
+  is_dirty_ = true;
 }
 
 void StepQueue::removeSteps(unsigned int from_step_index, int to_step_index)
 {
   boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
   step_plan_.removeSteps(from_step_index, to_step_index);
+  is_dirty_ = true;
 }
 
 bool StepQueue::popStep(msgs::Step& step)
 {
   boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  is_dirty_ = true;
   return step_plan_.popStep(step);
 }
 
 bool StepQueue::popStep()
 {
   msgs::Step step;
+  is_dirty_ = true;
   return popStep(step);
 }
 
