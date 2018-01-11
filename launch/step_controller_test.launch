@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
 <launch>
-  <arg name="namespace" default="vigir_step_controller" />
-  <group ns="$(arg namespace)">
+  <arg name="ns" default="vigir_step_controller" />
+  <group ns="$(arg ns)">
     <!-- start walk controller -->
     <node name="step_controller" pkg="vigir_step_control" type="step_controller_node" respawn="true" output="screen" />
 
