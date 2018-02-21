@@ -1,6 +1,0 @@
-# StepControllerPlugin
-step_controller_test_plugin:
-  type_class: vigir_step_control::StepControllerTestPlugin
-  type_class_package: vigir_step_control
-  base_class: vigir_step_control::StepControllerPlugin
-  base_class_package: vigir_step_control

@@ -1,5 +1,5 @@
 <library path="lib/libvigir_step_control">
-  <class type="vigir_step_control::StepControllerTestPlugin" base_class_type="vigir_step_control::StepControllerPlugin">
+  <class name="step_controller_test_plugin" type="vigir_step_control::StepControllerTestPlugin" base_class_type="vigir_step_control::StepControllerPlugin">
     <description>
       StepControllerTestPlugin: Example plugin which simulates execution of steps.
     </description>
