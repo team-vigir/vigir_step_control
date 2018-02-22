@@ -127,8 +127,8 @@ protected:
   void executeStepPlan(const msgs::StepPlanConstPtr& step_plan);
 
   // action server calls
-  void executeStepPlanAction(ExecuteStepPlanActionServerPtr& as);
-  void executePreemptionAction(ExecuteStepPlanActionServerPtr& as);
+  void executeStepPlanAction(ExecuteStepPlanActionServerPtr as);
+  void executePreemptionAction(ExecuteStepPlanActionServerPtr as);
 
   // subscriber
   ros::Subscriber load_step_plan_msg_plugin_sub_;
@@ -136,7 +136,7 @@ protected:
   ros::Subscriber execute_step_plan_sub_;
 
   // publisher
-  ros::Publisher planning_feedback_pub_;
+  ros::Publisher feedback_pub_;
 
   // action servers
   boost::shared_ptr<ExecuteStepPlanActionServer> execute_step_plan_as_;

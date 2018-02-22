@@ -25,7 +25,7 @@ StepController::StepController(ros::NodeHandle& nh, bool auto_spin)
   execute_step_plan_sub_ = nh.subscribe("execute_step_plan", 1, &StepController::executeStepPlan, this);
 
   // publish topics
-  planning_feedback_pub_ = nh.advertise<msgs::ExecuteStepPlanFeedback>("execute_feedback", 1, true);
+  feedback_pub_ = nh.advertise<msgs::ExecuteStepPlanFeedback>("execute_feedback", 1, true);
 
   // init action servers
   execute_step_plan_as_.reset(new ExecuteStepPlanActionServer(nh, "execute_step_plan", false));
@@ -115,7 +115,7 @@ void StepController::publishFeedback() const
     const msgs::ExecuteStepPlanFeedback& feedback = step_controller_plugin_->getFeedbackState();
 
     // publish feedback
-    planning_feedback_pub_.publish(feedback);
+    feedback_pub_.publish(feedback);
 
     if (execute_step_plan_as_->isActive())
       execute_step_plan_as_->publishFeedback(feedback);
@@ -147,7 +147,7 @@ void StepController::executeStepPlan(const msgs::StepPlanConstPtr& step_plan)
 
 //--- action server calls ---
 
-void StepController::executeStepPlanAction(ExecuteStepPlanActionServerPtr& as)
+void StepController::executeStepPlanAction(ExecuteStepPlanActionServerPtr as)
 {
   const msgs::ExecuteStepPlanGoalConstPtr& goal(as->acceptNewGoal());
 
@@ -161,7 +161,7 @@ void StepController::executeStepPlanAction(ExecuteStepPlanActionServerPtr& as)
   executeStepPlan(goal->step_plan);
 }
 
-void StepController::executePreemptionAction(ExecuteStepPlanActionServerPtr& as)
+void StepController::executePreemptionAction(ExecuteStepPlanActionServerPtr as)
 {
   if (as->isActive())
     as->setPreempted();
