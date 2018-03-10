@@ -9,7 +9,8 @@ namespace vigir_step_control
 {
 StepControllerNode::StepControllerNode(ros::NodeHandle& nh)
 {
-  step_controller_.reset(new StepController(nh, nh.param("auto_spin", true)));
+  step_controller_.reset(new StepController(nh));
+  step_controller_->initialize(nh, nh.param("auto_spin", true));
 }
 
 StepControllerNode::~StepControllerNode()

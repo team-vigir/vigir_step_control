@@ -5,5 +5,7 @@
   <group ns="$(arg ns)">
     <!-- start walk controller -->
     <node name="step_controller" pkg="vigir_step_control" type="step_controller_node" respawn="true" output="screen" />
+    <param name="step_controller_plugin" value="step_controller_test_plugin" />
+    <param name="step_plan_msg_plugin" value="step_plan_msg_plugin" />
   </group>
 </launch>

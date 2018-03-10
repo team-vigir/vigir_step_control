@@ -6,18 +6,10 @@
 
 namespace vigir_step_control
 {
-StepController::StepController(ros::NodeHandle& nh, bool auto_spin)
+StepController::StepController(ros::NodeHandle& nh)
 {
   vigir_pluginlib::PluginManager::addPluginClassLoader<vigir_footstep_planning::StepPlanMsgPlugin>("vigir_footstep_planning_plugins", "vigir_footstep_planning::StepPlanMsgPlugin");
   vigir_pluginlib::PluginManager::addPluginClassLoader<StepControllerPlugin>("vigir_step_control", "vigir_step_control::StepControllerPlugin");
-
-  // init step plan msg plugin
-  loadPlugin(nh.param("step_plan_msg_plugin", std::string("step_plan_msg_plugin")), step_plan_msg_plugin_);
-
-  // init walk controller plugin
-  loadPlugin(nh.param("step_controller_plugin", std::string("step_controller_test_plugin")), step_controller_plugin_);
-  if (step_controller_plugin_)
-    step_controller_plugin_->setStepPlanMsgPlugin(step_plan_msg_plugin_);
 
   // subscribe topics
   load_step_plan_msg_plugin_sub_ = nh.subscribe("load_step_plan_msg_plugin", 1, &StepController::loadStepPlanMsgPlugin, this);
@@ -34,14 +26,38 @@ StepController::StepController(ros::NodeHandle& nh, bool auto_spin)
 
   // start action servers
   execute_step_plan_as_->start();
-
-  // schedule main update loop
-  if (auto_spin)
-    update_timer_ = nh.createTimer(nh.param("rate", 10.0), &StepController::update, this);
 }
 
 StepController::~StepController()
 {
+}
+
+bool StepController::initialize(ros::NodeHandle& nh, bool auto_spin)
+{
+  // init step controller plugin
+  if (!loadPlugin(nh.param("step_controller_plugin", std::string("step_controller_plugin")), step_controller_plugin_))
+    return false;
+
+  // init step plan msg plugin
+  if (!loadPlugin(nh.param("step_plan_msg_plugin", std::string("step_plan_msg_plugin")), step_plan_msg_plugin_))
+    return false;
+
+  return initialize(nh, step_controller_plugin_, step_plan_msg_plugin_, auto_spin);
+}
+
+bool StepController::initialize(ros::NodeHandle& nh, StepControllerPlugin::Ptr step_controller_plugin, vigir_footstep_planning::StepPlanMsgPlugin::Ptr step_plan_msg_plugin, bool auto_spin)
+{
+  step_plan_msg_plugin_ = step_plan_msg_plugin;
+  step_controller_plugin_ = step_controller_plugin;
+
+  if (step_controller_plugin_)
+    step_controller_plugin_->setStepPlanMsgPlugin(step_plan_msg_plugin_);
+
+  // schedule main update loop
+  if (auto_spin)
+    update_timer_ = nh.createTimer(nh.param("update_rate", 10.0), &StepController::update, this);
+
+  return true;
 }
 
 void StepController::executeStepPlan(const msgs::StepPlan& step_plan)

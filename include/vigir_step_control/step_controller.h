@@ -59,10 +59,27 @@ public:
   /**
    * @brief StepController
    * @param nh Nodehandle living in correct namespace for all services
-   * @param spin When true, the controller sets up it's own ros timer for calling update(...) continously.
    */
-  StepController(ros::NodeHandle& nh, bool auto_spin = true);
+  StepController(ros::NodeHandle& nh);
   virtual ~StepController();
+
+  /**
+   * @brief Initializes step controller
+   * @param nh Nodehandle living in correct namespace for all parameters
+   * @param auto_spin If true, then the controller sets up it's own ros timer for calling update(...) continously.
+   * @return true, if initialization was successful
+   */
+  bool initialize(ros::NodeHandle& nh, bool auto_spin = true);
+
+  /**
+   * @brief Initializes step controller
+   * @param nh Nodehandle living in correct namespace for all parameters
+   * @param step_controller_plugin Plugin interfacing the H/W layer of the robot
+   * @param step_plan_msg_plugin Plugin decoding the robot specific parameters from step msg
+   * @param auto_spin If true, then the controller sets up it's own ros timer for calling update(...) continously.
+   * @return true, if initialization was successful
+   */
+  bool initialize(ros::NodeHandle& nh, StepControllerPlugin::Ptr step_controller_plugin, vigir_footstep_planning::StepPlanMsgPlugin::Ptr step_plan_msg_plugin, bool auto_spin = true);
 
   /**
    * @brief Loads plugin with specific name to be used by the controller. The name should be configured
@@ -71,28 +88,30 @@ public:
    * @param plugin_name Name of plugin
    */
   template<typename T>
-  void loadPlugin(const std::string& plugin_name, boost::shared_ptr<T>& plugin)
+  bool loadPlugin(const std::string& plugin_name, boost::shared_ptr<T>& plugin)
   {
     boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
 
     if (step_controller_plugin_ && step_controller_plugin_->getState() == ACTIVE)
     {
       ROS_ERROR("[StepController] Cannot replace plugin due to active footstep execution!");
-      return;
+      return false;
     }
 
     if (!vigir_pluginlib::PluginManager::addPluginByName(plugin_name))
     {
       ROS_ERROR("[StepController] Could not load plugin '%s'!", plugin_name.c_str());
-      return;
+      return false;
     }
     else if (!vigir_pluginlib::PluginManager::getPlugin(plugin))
     {
       ROS_ERROR("[StepController] Could not obtain plugin '%s' from plugin manager!", plugin_name.c_str());
-      return;
+      return false;
     }
     else
       ROS_INFO("[StepController] Loaded plugin '%s'.", plugin_name.c_str());
+
+    return true;
   }
 
   /**
@@ -113,8 +132,8 @@ protected:
    */
   void publishFeedback() const;
 
-  vigir_footstep_planning::StepPlanMsgPlugin::Ptr step_plan_msg_plugin_;
   StepControllerPlugin::Ptr step_controller_plugin_;
+  vigir_footstep_planning::StepPlanMsgPlugin::Ptr step_plan_msg_plugin_;
 
   // mutex to ensure thread safeness
   boost::shared_mutex controller_mutex_;
