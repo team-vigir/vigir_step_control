@@ -207,17 +207,23 @@ void StepControllerPlugin::process(const ros::TimerEvent& /*event*/)
 
       // increment last_step_index_sent
       setLastStepIndexSent(next_step_index);
-
-      msgs::ExecuteStepPlanFeedback feedback = getFeedbackState();
-
-      // garbage collection: remove already executed steps
-      if (step_queue_->firstStepIndex() <= feedback.last_performed_step_index)
-        step_queue_->removeSteps(0, feedback.last_performed_step_index);
-
-      // update feedback
-      updateQueueFeedback();
     }
   }
+}
+
+void StepControllerPlugin::postProcess(const ros::TimerEvent& /*event*/)
+{
+  if (getState() == READY)
+    return;
+
+  msgs::ExecuteStepPlanFeedback feedback = getFeedbackState();
+
+  // garbage collection: remove already executed steps
+  if (step_queue_->firstStepIndex() <= feedback.last_performed_step_index)
+    step_queue_->removeSteps(0, feedback.last_performed_step_index);
+
+  // update feedback
+  updateQueueFeedback();
 }
 
 void StepControllerPlugin::stop()

@@ -152,7 +152,7 @@ public:
   /**
    * @brief PostProcess Method is called after processing step, in order to sum up the current status and cleanups.
    */
-  virtual void postProcess(const ros::TimerEvent& /*event*/) {}
+  virtual void postProcess(const ros::TimerEvent& event);
 
   /**
    * @brief This method will be called when the next step should be added to execution pipeline. The call of this function should
