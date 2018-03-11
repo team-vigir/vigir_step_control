@@ -8,8 +8,8 @@ namespace vigir_step_control
 {
 StepController::StepController(ros::NodeHandle& nh)
 {
-  vigir_pluginlib::PluginManager::addPluginClassLoader<vigir_footstep_planning::StepPlanMsgPlugin>("vigir_footstep_planning_plugins", "vigir_footstep_planning::StepPlanMsgPlugin");
   vigir_pluginlib::PluginManager::addPluginClassLoader<StepControllerPlugin>("vigir_step_control", "vigir_step_control::StepControllerPlugin");
+  vigir_pluginlib::PluginManager::addPluginClassLoader<vigir_footstep_planning::StepPlanMsgPlugin>("vigir_footstep_planning_plugins", "vigir_footstep_planning::StepPlanMsgPlugin");
 
   // subscribe topics
   load_step_plan_msg_plugin_sub_ = nh.subscribe("load_step_plan_msg_plugin", 1, &StepController::loadStepPlanMsgPlugin, this);
