@@ -33,7 +33,7 @@ StepControllerPlugin::~StepControllerPlugin()
 
 void StepControllerPlugin::setStepPlanMsgPlugin(vigir_footstep_planning::StepPlanMsgPlugin::Ptr plugin)
 {
-  boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
+  UniqueLock lock(plugin_mutex_);
 
   if (plugin)
     step_plan_msg_plugin_ = plugin;
@@ -43,25 +43,25 @@ void StepControllerPlugin::setStepPlanMsgPlugin(vigir_footstep_planning::StepPla
 
 StepControllerState StepControllerPlugin::getState() const
 {
-  boost::shared_lock<boost::shared_mutex> lock(plugin_mutex_);
+  SharedLock lock(plugin_mutex_);
   return state_;
 }
 
 int StepControllerPlugin::getNextStepIndexNeeded() const
 {
-  boost::shared_lock<boost::shared_mutex> lock(plugin_mutex_);
+  SharedLock lock(plugin_mutex_);
   return next_step_index_needed_;
 }
 
 int StepControllerPlugin::getLastStepIndexSent() const
 {
-  boost::shared_lock<boost::shared_mutex> lock(plugin_mutex_);
+  SharedLock lock(plugin_mutex_);
   return last_step_index_sent_;
 }
 
 const msgs::ExecuteStepPlanFeedback& StepControllerPlugin::getFeedbackState() const
 {
-  boost::shared_lock<boost::shared_mutex> lock(plugin_mutex_);
+  SharedLock lock(plugin_mutex_);
   return feedback_state_;
 }
 
@@ -83,7 +83,7 @@ void StepControllerPlugin::reset()
 
 void StepControllerPlugin::setState(StepControllerState state)
 {
-  boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
+  UniqueLock lock(plugin_mutex_);
   ROS_INFO("[StepControllerPlugin] Switching state from '%s' to '%s'.", toString(this->state_).c_str(), toString(state).c_str());
   this->state_ = state;
   feedback_state_.controller_state = state;
@@ -91,25 +91,25 @@ void StepControllerPlugin::setState(StepControllerState state)
 
 void StepControllerPlugin::setNextStepIndexNeeded(int index)
 {
-  boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
+  UniqueLock lock(plugin_mutex_);
   next_step_index_needed_ = index;
 }
 
 void StepControllerPlugin::setLastStepIndexSent(int index)
 {
-  boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
+  UniqueLock lock(plugin_mutex_);
   last_step_index_sent_ = index;
 }
 
 void StepControllerPlugin::setFeedbackState(const msgs::ExecuteStepPlanFeedback& feedback)
 {
-  boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
+  UniqueLock lock(plugin_mutex_);
   this->feedback_state_ = feedback;
 }
 
 void StepControllerPlugin::updateQueueFeedback()
 {
-  boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
+  UniqueLock lock(plugin_mutex_);
   feedback_state_.queue_size = static_cast<int>(step_queue_->size());
   feedback_state_.first_queued_step_index = step_queue_->firstStepIndex();
   feedback_state_.last_queued_step_index = step_queue_->lastStepIndex();
@@ -197,7 +197,7 @@ void StepControllerPlugin::process(const ros::TimerEvent& /*event*/)
 
       ROS_ASSERT(next_step_index == step.step_index);
 
-      // sent step to walking engine
+      // send step to walking engine
       if (!executeStep(step))
       {
         ROS_ERROR("[StepControllerPlugin] Error while execution request of step %i. Execution aborted!", next_step_index);
@@ -222,7 +222,7 @@ void StepControllerPlugin::process(const ros::TimerEvent& /*event*/)
 
 void StepControllerPlugin::stop()
 {
-  boost::unique_lock<boost::shared_mutex> lock(plugin_mutex_);
+  UniqueLock lock(plugin_mutex_);
 
   ROS_INFO("[StepControllerPlugin] Stop requested. Resetting walk controller.");
   reset();

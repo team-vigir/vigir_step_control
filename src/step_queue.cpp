@@ -14,30 +14,32 @@ StepQueue::~StepQueue()
 
 void StepQueue::reset()
 {
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  UniqueLock lock(queue_mutex_);
   step_plan_.clear();
   is_dirty_ = true;
 }
 
 bool StepQueue::empty() const
 {
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  UniqueLock lock(queue_mutex_);
   return step_plan_.empty();
 }
 
 size_t StepQueue::size() const
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
+  SharedLock lock(queue_mutex_);
   return step_plan_.size();
 }
 
 bool StepQueue::isDirty() const
 {
+  SharedLock lock(queue_mutex_);
   return is_dirty_;
 }
 
 void StepQueue::clearDirtyFlag()
 {
+  UniqueLock lock(queue_mutex_);
   is_dirty_ = false;
 }
 
@@ -57,7 +59,7 @@ bool StepQueue::updateStepPlan(const msgs::StepPlan& step_plan, int min_step_ind
 
   unsigned int step_plan_start_index = std::max(min_step_index, step_plan.steps.front().step_index);
 
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  UniqueLock lock(queue_mutex_);
 
   // step index has to start at 0, when step queue is empty
   if (this->step_plan_.empty())
@@ -118,19 +120,19 @@ bool StepQueue::updateStepPlan(const msgs::StepPlan& step_plan, int min_step_ind
 
 bool StepQueue::getStep(msgs::Step& step, unsigned int step_index)
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
+  SharedLock lock(queue_mutex_);
   return step_plan_.getStep(step, step_index);
 }
 
 bool StepQueue::getStepAt(msgs::Step& step, unsigned int position)
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
+  SharedLock lock(queue_mutex_);
   return step_plan_.getStepAt(step, position);
 }
 
 std::vector<msgs::Step> StepQueue::getSteps(unsigned int start_index, unsigned int end_index) const
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
+  SharedLock lock(queue_mutex_);
 
   std::vector<msgs::Step> steps;
 
@@ -146,21 +148,21 @@ std::vector<msgs::Step> StepQueue::getSteps(unsigned int start_index, unsigned i
 
 void StepQueue::removeStep(unsigned int step_index)
 {
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  UniqueLock lock(queue_mutex_);
   step_plan_.removeStep(step_index);
   is_dirty_ = true;
 }
 
 void StepQueue::removeSteps(unsigned int from_step_index, int to_step_index)
 {
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  UniqueLock lock(queue_mutex_);
   step_plan_.removeSteps(from_step_index, to_step_index);
   is_dirty_ = true;
 }
 
 bool StepQueue::popStep(msgs::Step& step)
 {
-  boost::unique_lock<boost::shared_mutex> lock(queue_mutex_);
+  UniqueLock lock(queue_mutex_);
   is_dirty_ = true;
   return step_plan_.popStep(step);
 }
@@ -174,7 +176,7 @@ bool StepQueue::popStep()
 
 int StepQueue::firstStepIndex() const
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
+  SharedLock lock(queue_mutex_);
 
   msgs::Step step;
   if (step_plan_.getfirstStep(step))
@@ -185,7 +187,7 @@ int StepQueue::firstStepIndex() const
 
 int StepQueue::lastStepIndex() const
 {
-  boost::shared_lock<boost::shared_mutex> lock(queue_mutex_);
+  SharedLock lock(queue_mutex_);
 
   msgs::Step step;
   if (step_plan_.getLastStep(step))

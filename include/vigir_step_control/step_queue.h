@@ -40,6 +40,14 @@ namespace vigir_step_control
 {
 using namespace vigir_footstep_planning;
 
+typedef boost::shared_mutex Mutex;
+typedef boost::shared_lock<Mutex> SharedLock;
+typedef boost::unique_lock<Mutex> UniqueLock;
+typedef boost::upgrade_lock<Mutex> UpgradeLock;
+typedef boost::upgrade_to_unique_lock<Mutex> UpgradeToUniqueLock;
+
+
+
 class StepQueue
 {
 public:
@@ -149,7 +157,7 @@ protected:
   bool is_dirty_;
 
   // mutex to ensure thread safeness
-  mutable boost::shared_mutex queue_mutex_;
+  mutable Mutex queue_mutex_;
 };
 }
 

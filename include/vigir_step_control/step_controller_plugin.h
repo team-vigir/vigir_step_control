@@ -55,6 +55,16 @@ enum StepControllerState
 
 std::string toString(const StepControllerState& state);
 
+
+/**
+ * @brief The StepControllerPlugin class provides the basic interface in order to handle
+ * robot-specific behavior. In order to integrate a new robot system, at least following
+ * methods have to be overloaded:
+ * initWalk: Initialize all variables and interfaces properly
+ * preProcess: Handles state maching by updating the feedback state properly
+ * executeStep: Sends step to low level walk algorithm using the provided interfaces
+ * by the robot infrastructure
+ */
 class StepControllerPlugin
   : public vigir_pluginlib::Plugin
 {
@@ -120,12 +130,12 @@ public:
   virtual void initWalk() = 0;
 
   /**
-   * @brief PreProcess Method is called before processing walk controller, e.g. for precompute/update data or check walking engine status.
+   * @brief PreProcess Method is called before processing the walk controller, e.g. for precompute/update data or check walking engine status.
    * For keeping the default behavior running, following variables has to be properly updated here:
    * - feedback.first_changeable_step_index (or update it in postProcess(...) or executeStep(...) alternatively)
    * - feedback.last_performed_step_index (or update it in postProcess(...) or executeStep(...) alternatively)
    * - next_step_index_needed
-   * -- Note: Don't forget to update header data of feedback, when updating one of the mentioned values!
+   * -- Note: Don't forget to update header data of the feedback, when updating one of the mentioned values!
    * - setState(FINISEHD) when execution of all steps were successfully completed
    * - setState(FAILED) when an error has occured
    */
@@ -140,7 +150,7 @@ public:
   virtual void process(const ros::TimerEvent& event);
 
   /**
-   * @brief PostProcess Method is called after processing step, in purpose of sum up current status and cleanups for instance.
+   * @brief PostProcess Method is called after processing step, in order to sum up the current status and cleanups.
    */
   virtual void postProcess(const ros::TimerEvent& /*event*/) {}
 

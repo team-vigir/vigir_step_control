@@ -62,7 +62,7 @@ bool StepController::initialize(ros::NodeHandle& nh, StepControllerPlugin::Ptr s
 
 void StepController::executeStepPlan(const msgs::StepPlan& step_plan)
 {
-  boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
+  UniqueLock lock(controller_mutex_);
 
   if (!step_controller_plugin_)
   {
@@ -79,7 +79,7 @@ void StepController::executeStepPlan(const msgs::StepPlan& step_plan)
 
 void StepController::update(const ros::TimerEvent& event)
 {
-  boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
+  UniqueLock lock(controller_mutex_);
 
   if (!step_controller_plugin_)
   {
@@ -98,6 +98,9 @@ void StepController::update(const ros::TimerEvent& event)
   // process
   step_controller_plugin_->process(event);
 
+  // post process
+  step_controller_plugin_->postProcess(event);
+
   lock.unlock();
 
   // publish feedback
@@ -108,20 +111,25 @@ void StepController::update(const ros::TimerEvent& event)
   {
     case FINISHED:
       if (execute_step_plan_as_->isActive())
-        execute_step_plan_as_->setSucceeded(msgs::ExecuteStepPlanResult());
+      {
+        msgs::ExecuteStepPlanResult result;
+        result.controller_state = state;
+        execute_step_plan_as_->setSucceeded(result);
+      }
       break;
 
     case FAILED:
       if (execute_step_plan_as_->isActive())
-        execute_step_plan_as_->setAborted(msgs::ExecuteStepPlanResult());
+      {
+        msgs::ExecuteStepPlanResult result;
+        result.controller_state = state;
+        execute_step_plan_as_->setAborted(result);
+      }
       break;
 
     default:
       break;
   }
-
-  // post process
-  step_controller_plugin_->postProcess(event);
 }
 
 void StepController::publishFeedback() const

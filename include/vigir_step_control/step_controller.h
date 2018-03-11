@@ -90,7 +90,7 @@ public:
   template<typename T>
   bool loadPlugin(const std::string& plugin_name, boost::shared_ptr<T>& plugin)
   {
-    boost::unique_lock<boost::shared_mutex> lock(controller_mutex_);
+    UniqueLock lock(controller_mutex_);
 
     if (step_controller_plugin_ && step_controller_plugin_->getState() == ACTIVE)
     {
